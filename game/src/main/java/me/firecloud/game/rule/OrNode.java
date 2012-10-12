@@ -3,13 +3,16 @@
  */
 package me.firecloud.game.rule;
 
+import java.util.List;
+
 /**
  * @date 2012-10-12
  * 
  */
-public abstract class ActorNode
-    extends SingleNode
+public class OrNode
     implements Node {
+
+  protected List<Node> nextNodes;
 
   /*
    * (non-Javadoc)
@@ -18,15 +21,18 @@ public abstract class ActorNode
    */
   public
       Node handle(Event event,GameContext gameContext) throws RuleException {
-    if (checkActor(event,gameContext)) {
-      // invoke next node
-      return nextNode.handle(event,gameContext);
-    } else {
-      return null;
-    }
-  }
+    for (Node node : nextNodes) {
+      try {
+        Node nextNode = node.handle(event,gameContext);
+        if (node != null) {
+          return nextNode;
+        }
+      } catch (RuleException ex) {
 
-  protected abstract
-      boolean checkActor(Event event,GameContext gameContext);
+      }
+    }
+
+    return null;
+  }
 
 }

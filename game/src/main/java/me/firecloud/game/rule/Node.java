@@ -10,6 +10,6 @@ package me.firecloud.game.rule;
 public interface Node {
 
   public
-      Node handle(Event event) throws RuleException;
+      Node handle(Event event,GameContext gameContext) throws RuleException;
 
 }
