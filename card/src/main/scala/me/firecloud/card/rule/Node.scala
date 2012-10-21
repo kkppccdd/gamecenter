@@ -9,6 +9,6 @@ package me.firecloud.card.rule
  * @date Oct 19, 2012
  *
  */
-trait Node {
+abstract class Node {
   def handle(gameContext: GameContext, event: Event):Node
 }

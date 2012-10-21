@@ -6,10 +6,9 @@ package me.firecloud.card.rule
 /**
  * @author kkppccdd
  * @email kkppccdd@gmail.com
- * @date Oct 19, 2012
+ * @date Oct 21, 2012
  *
  */
-abstract class SingleNode(nextNode:Node)
-  extends Node {
+class Card {
 
 }

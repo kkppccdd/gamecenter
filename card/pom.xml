@@ -58,6 +58,7 @@
 					<scalaVersion>${scala.version}</scalaVersion>
 					<args>
 						<arg>-target:jvm-1.5</arg>
+						<!-- <arg>-Xexperimental</arg> -->
 					</args>
 				</configuration>
 			</plugin><!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-eclipse-plugin</artifactId> 

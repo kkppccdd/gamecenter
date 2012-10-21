@@ -11,4 +11,5 @@ package me.firecloud.card.rule
  */
 trait Event {
   def isHandled: Boolean
+  val actor: Player
 }

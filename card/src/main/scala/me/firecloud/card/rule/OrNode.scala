@@ -11,7 +11,7 @@ package me.firecloud.card.rule
  */
 class OrNode(val nodes: List[Node]) extends Node {
 
-  def handle(gameContext: GameContext, event: Event): Node = {
+  override def handle(gameContext: GameContext, event: Event): Node = {
     for (node <- nodes) yield {
       var result = node.handle(gameContext, event)
       if (result != null) {

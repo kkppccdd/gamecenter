@@ -9,9 +9,9 @@ package me.firecloud.card.rule
  * @date Oct 19, 2012
  *
  */
-abstract class ActionNode extends SingleNode {
+abstract class ActionNode(nextNode:Node) extends SingleNode(nextNode:Node) {
 
-  def handle(gameContext: GameContext, event: Event): Node = {
+  override def handle(gameContext: GameContext, event: Event): Node = {
     if (event.isHandled) {
       return null;
     } else {
@@ -23,6 +23,6 @@ abstract class ActionNode extends SingleNode {
     }
   }
 
-  protected def perform(gameContext: GameContext, event: Event):Boolean
+   protected def perform(gameContext: GameContext, event: Event):Boolean
 
 }

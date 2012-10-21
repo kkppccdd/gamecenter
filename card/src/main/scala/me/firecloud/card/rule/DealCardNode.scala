@@ -9,8 +9,17 @@ package me.firecloud.card.rule
  * @date Oct 19, 2012
  *
  */
-class DealCardNode extends ActionNode {
+class DealCardNode(nextNode: Node) extends ActionNode(nextNode: Node) {
 
-  def perform(gameContext: GameContext, event: Event): Boolean = { false }
+  override def perform(gameContext: GameContext, event: Event): Boolean = {
+
+    while (gameContext.dealer.hand.size() > 5) {
+      // deal all cards to each player until remaining 5 cards
+      for (player <- gameContext.players) yield {
+        player.hand.add(gameContext.dealer.hand.remove(gameContext.dealer.hand.size() - 1))
+      }
+    }
+    true
+  }
 
 }

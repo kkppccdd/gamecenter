@@ -2,6 +2,9 @@
  *
  */
 package me.firecloud.card.rule
+import scala.collection.immutable.List
+import java.util.Map
+import java.util.HashMap
 
 /**
  * @author kkppccdd
@@ -9,6 +12,13 @@ package me.firecloud.card.rule
  * @date Oct 19, 2012
  *
  */
-trait GameContext {
+class GameContext {
+  val players: List[Player]
+  val dealer: Dealer
 
+  val circles: Map[String, ActorCircle] = new HashMap[String, ActorCircle]
+
+  def getCircle(name: String): ActorCircle = {
+    return circles.get(name)
+  }
 }

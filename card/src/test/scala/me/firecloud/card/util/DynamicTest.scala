@@ -2,7 +2,8 @@
  *
  */
 package me.firecloud.card.util
-import org.junit._
+import org.junit.Test
+import org.junit.Assert
 
 /**
  * @author kkppccdd
@@ -14,8 +15,8 @@ import org.junit._
 class DynamicTest {
 	@Test
 	def testPrototype()={
-	  var testObject =  SamplePrototype()
-	  testObject.a=1
-	  assertEqual(1,testObject.a)
+	  //val testObject =  new SamplePrototype
+	  //testObject.a = 1
+	  //Assert.assertEquals(1,testObject.a)
 	}
 }

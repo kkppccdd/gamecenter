@@ -9,15 +9,17 @@ package me.firecloud.card.rule
  * @date Oct 19, 2012
  *
  */
-abstract class ActorNode extends SingleNode {
+abstract class ActorNode(nextNode: Node) extends SingleNode(nextNode: Node) {
 
-  def handle(gameContext: GameContext, event: Event): Node = {
-    if (checkActor(gameContext, event)) {
-      return nextNode.handle(gameContext, event)
-    } else {
-      return null
+    override def handle(gameContext: GameContext, event: Event): Node = {
+        if (checkActor(gameContext, event)) {
+            return nextNode.handle(gameContext, event)
+           
+        } else {
+            return null
+        }
     }
-  }
 
-  protected def checkActor(gameContext: GameContext, event: Event): Boolean
+    protected def checkActor(gameContext: GameContext, event: Event): Boolean
+
 }
