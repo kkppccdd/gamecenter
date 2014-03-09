@@ -19,14 +19,14 @@ import org.slf4j.LoggerFactory
 class MessageCodecFilter {
     val log = LoggerFactory.getLogger(this.getClass())
 
-    var messageCodecs = Map[String, MessageCodec]()
+    var messageCodecs = Map[Tuple2[Long,Long], MessageCodec]()
 
     val mapper = new ObjectMapper()
     mapper.registerModule(DefaultScalaModule)
 
     {
-        val commonMessageCodec = new CommonMessageCodec()
-        commonMessageCodec.supportedMessageCodes.foreach(code => messageCodecs += { code -> commonMessageCodec })
+        //val commonMessageCodec = new CommonMessageCodec()
+        //commonMessageCodec.supportedMessageCodes.foreach(code => messageCodecs += { code -> commonMessageCodec })
 
         val cardMessageCodec = new CardMessageCodec()
         cardMessageCodec.supportedMessageCodes.foreach(code => messageCodecs += { code -> cardMessageCodec })
@@ -34,7 +34,7 @@ class MessageCodecFilter {
 
     def encode(message: Message): Option[String] = {
         try {
-            val messageCodec = messageCodecs(message.code)
+            val messageCodec = messageCodecs((message.cla,message.ins))
             Some(messageCodec.encode(message))
         } catch {
             case ex =>
@@ -45,8 +45,8 @@ class MessageCodecFilter {
 
     def decode(json: String): Option[Message] = {
         try {
-
-            val messageCodec = messageCodecs(mapper.readTree(json).findValue("code").asText())
+        	val key = (mapper.readTree(json).findValue("CLA").asLong(),mapper.readTree(json).findValue("INS").asLong())
+            val messageCodec = messageCodecs(key)
             Some(messageCodec.decode(json))
         } catch {
             case ex =>

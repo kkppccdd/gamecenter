@@ -34,7 +34,7 @@ object Connector extends Controller {
                         //receive the pushed messages
                         val roomActor = Akka.system().actorSelection(roomId)
                         
-                        channel push ("RESPONSE: " + decodedMesg.get.code)
+                        channel push ("RESPONSE: " + decodedMesg.get.cla)
                     } else {
                         channel push ("RESPONSE: ERROR MESSAGE")
                     }

@@ -8,12 +8,11 @@ import me.firecloud.gamecenter.model.Message
 import scala.util.parsing.json.JSON
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import me.firecloud.gamecenter.card.model.PutCardAction
 import com.fasterxml.jackson.core.`type`.TypeReference
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
-import me.firecloud.gamecenter.card.model.PassAction
 import com.fasterxml.jackson.databind.DeserializationFeature
+import me.firecloud.gamecenter.card.model.PutCard
 
 /**
  * @author kkppccdd
@@ -23,7 +22,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
  */
 class CardMessageCodec extends MessageCodec {
 
-    override def supportedMessageCodes = Set(PutCardAction.code, PassAction.code)
+    override def supportedMessageCodes = Set((1,1))
 
     override def encode(message: Message): String = {
         mapper.writeValueAsString(message)
@@ -31,9 +30,9 @@ class CardMessageCodec extends MessageCodec {
 
     override def decode(json: String): Message = {
         try {
-            mapper.readTree(json).findValue("code").asText() match {
-                case PutCardAction.code => mapper.readValue(json, typeReference[PutCardAction])
-                case PassAction.code => mapper.readValue(json, typeReference[PassAction])
+            val key =(mapper.readTree(json).findValue("CLA").asLong(),mapper.readTree(json).findValue("INS").asLong())
+            key match {
+                case (1,1) => mapper.readValue(json, typeReference[PutCard])
                 case _ => null
             }
         } catch {

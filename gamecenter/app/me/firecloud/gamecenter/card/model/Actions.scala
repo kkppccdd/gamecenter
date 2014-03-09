@@ -3,7 +3,7 @@
  */
 package me.firecloud.gamecenter.card.model
 
-import me.firecloud.gamecenter.model.Action
+import me.firecloud.gamecenter.model.Message
 
 
 /**
@@ -13,17 +13,19 @@ import me.firecloud.gamecenter.model.Action
  * requests
  */
 
-/******************
- * constants
- */
-object PutCardAction{
-    val code="CARD_ACTION_PUT_CARD"
+
+
+case class PutCard(userId:String,cards:List[Card]) extends Message(userId){
+    def cla:Long=0x02;//1
+    def ins:Long=0x01;//1
 }
 
-object PassAction{
-    val code="CARD_ACTION_PASS"
+case class Pass(userId:String) extends Message(userId){
+    def cla:Long=0x02;//1
+    def ins:Long=0x02;//1
 }
 
-case class PutCardAction(userId:String,cards:List[Card]) extends Action(code=PutCardAction.code,userId)
-
-case class PassAction(userId:String) extends Action(code=PassAction.code,userId)
+case class DealCard(userId:String,toUserId:String,cards:List[Card]) extends Message(userId){
+    def cla:Long=0x02;//1
+    def ins:Long=0x03;//1
+}

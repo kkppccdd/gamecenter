@@ -5,8 +5,7 @@ package me.firecloud.gamecenter.card.web
 
 import org.junit._
 import Assert._
-import me.firecloud.gamecenter.card.model.PutCardAction
-import me.firecloud.gamecenter.card.model.PassAction
+import me.firecloud.gamecenter.card.model.PutCard
 
 /**
  * @author kkppccdd
@@ -22,7 +21,7 @@ class CardMessageCodecTest {
     def testEncodePutCardAction(){
         
         // construct action
-        val msg = new PutCardAction("1",List())
+        val msg = new PutCard("1",List())
         
         assertEquals("{\"userId\":\"1\",\"cards\":[],\"code\":\"CARD_ACTION_PUT_CARD\"}", codec.encode(msg))
     }
@@ -30,34 +29,14 @@ class CardMessageCodecTest {
     @Test
     def testDecodePutCardAction(){
         // construct json
-        val json="{\"code\":\"CARD_ACTION_PUT_CARD\",\"userId\":\"1\",\"cards\":[]}"
+        val json="{\"userId\":\"1\",\"cards\":[],\"id\":\"1d44c563-31b9-4efc-8ee8-bb1dec47de2a\",\"CLA\":1,\"INS\":1}"
         val msg=codec.decode(json)
         
-        assertTrue(msg.isInstanceOf[PutCardAction])
-        val putCardAction = msg.asInstanceOf[PutCardAction]
+        assertTrue(msg.isInstanceOf[PutCard])
+        val putCardAction = msg.asInstanceOf[PutCard]
         assertEquals("1",putCardAction.userId)
-        assertEquals(PutCardAction.code,putCardAction.code)
+        assertEquals(1,putCardAction.cla)
     }
     
-    @Test
-    def testEncodePassAction() {
-        // construct action
-        val msg =new PassAction("1")
-        
-        assertEquals("{\"userId\":\"1\",\"code\":\"CARD_ACTION_PASS\"}",codec.encode(msg))
-    }
-    
-    @Test
-    def testDecodePassAction(){
-        // construct json
-        
-        val json="{\"userId\":\"1\",\"code\":\"CARD_ACTION_PASS\"}"
-        val msg=codec.decode(json)
-        
-        assertTrue(msg.isInstanceOf[PassAction])
-        val passAction = msg.asInstanceOf[PassAction]
-        assertEquals("1",passAction.userId)
-        assertEquals(PassAction.code,passAction.code)
-        
-    }
+
 }

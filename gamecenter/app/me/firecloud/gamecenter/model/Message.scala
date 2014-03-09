@@ -3,22 +3,28 @@
  */
 package me.firecloud.gamecenter.model
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 /**
  * @author kkppccdd
  * @email kkppccdd@gmail.com
  * @date Jan 4, 2014
  *
  */
-abstract class Message(val code:String){
-    val id=java.util.UUID.randomUUID().toString()
+abstract class Message(userId:String){
+    @JsonProperty("cla")
+    def cla:Long
+    @JsonProperty("ins")
+    def ins:Long
+    val id=java.util.UUID.randomUUID().toString();
 }
 
-abstract class Action(code:String,userId:String) extends Message(code)
-
-abstract class Notice(code:String) extends Message(code)
-
-
-object ErrorNotice{
-    val code="NOTICE_ERROR"
+case class JoinRoom(userId:String,roomId:String) extends Message(userId){
+    def cla:Long=0x01
+    def ins:Long=0x01
 }
-class ErrorNotice(errorMessage:String) extends Notice(ErrorNotice.code)
+
+case class StartGame(userId:String) extends Message(userId){
+    def cla:Long=0x01
+    def ins:Long=0x02
+}
