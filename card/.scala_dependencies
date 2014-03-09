@@ -1,6 +1,0 @@
-E:\ff_workspace\card\target\classes;E:\ff_workspace\card\target\test-classes;E:\m2\repository\org\scala-lang\scala-library\2.9.2\scala-library-2.9.2.jar;E:\m2\repository\junit\junit\4.4\junit-4.4.jar
--------
--------
-I:\git\card\src\test\scala\me\firecloud\card\AppTest.scala -> I:\git\card\target\test-classes\me\firecloud\card\AppTest.class
-I:\git\card\src\main\scala\me\firecloud\card\App.scala -> I:\git\card\target\classes\me\firecloud\card\App$.class
-I:\git\card\src\main\scala\me\firecloud\card\App.scala -> I:\git\card\target\classes\me\firecloud\card\App.class
