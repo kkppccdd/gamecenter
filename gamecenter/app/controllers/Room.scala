@@ -8,11 +8,10 @@ import play.api.mvc._
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.databind.DeserializationFeature
-import me.firecloud.gamecenter.model.RoomConfiguration
-
 import com.fasterxml.jackson.core.`type`.TypeReference
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
+import me.firecloud.gamecenter.model.RoomDescription
 
 /**
  * @author kkppccdd
@@ -30,7 +29,7 @@ object Hall extends Controller {
         // create room model
         val payload = request.body.asText
         
-        val roomConfig = mapper.readValue(payload.get, typeReference[RoomConfiguration])
+        val roomConfig = mapper.readValue(payload.get, typeReference[RoomDescription])
         
         
         // create room actor

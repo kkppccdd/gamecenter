@@ -9,6 +9,6 @@ package me.firecloud.gamecenter.card.model
  * @date Jan 4, 2014
  *
  */
-class Card {
+class Card(id:Long) {
 
 }

@@ -4,6 +4,9 @@
 package me.firecloud.gamecenter.model
 
 import scala.collection.mutable.Map
+import akka.actor.ActorRef
+import akka.actor.Actor
+import akka.actor.Props
 
 /**
  * @author kkppccdd
@@ -11,17 +14,22 @@ import scala.collection.mutable.Map
  * @date Mar 8, 2014
  *
  */
-class RoomConfiguration(kind:String,name:String) {
-
+class RoomDescription(val kind:String,val name:String) {
+	var _id:String=null
+	
+	def id:String=_id
+	def id(newId:String)=_id=newId
 }
 
-class Room(val id:String){
-    var players:List[Player]=List()
+class Seat(val player:Tuple2[String,ActorRef])
+
+abstract class Room(val id:String) extends Actor{
+    var seats:List[Seat]=List()
 }
 
 trait RoomFactory{
     def kind:String
-    def build:Room
+    def build(description:RoomDescription):Tuple2[RoomDescription,Props]
 }
 
 object RoomFactoryManager{
