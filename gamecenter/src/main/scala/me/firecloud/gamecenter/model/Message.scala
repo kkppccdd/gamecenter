@@ -33,3 +33,6 @@ case class EndGame(userId:String) extends Message(userId){
     def cla:Long=0x01
     def ins:Long=0x03
 }
+
+
+case class Communication(msg:Message)

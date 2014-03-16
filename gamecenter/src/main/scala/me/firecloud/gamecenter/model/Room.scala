@@ -45,4 +45,6 @@ object RoomFactoryManager{
     
     def unregisterFactory(factory:RoomFactory):Option[RoomFactory]=unregisterFactory(factory.kind);
     
+    def getFactory(kind:String):Option[RoomFactory]=_registeredFactories.get(kind)
+    
 }

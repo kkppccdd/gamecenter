@@ -24,7 +24,7 @@ class PlayerActorTest {
     def testJoinRoom() {
     	// construct player actor
         val player1 = new Player("1","player1")
-        val playerActor1 = TestActorRef(new PlayerActor(player1),name=player1.name)
+        val playerActor1 = TestActorRef(new PlayerActor(player1),name=player1.id)
         
         // construct mock room actor
         

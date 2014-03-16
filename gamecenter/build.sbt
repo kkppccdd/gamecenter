@@ -10,4 +10,9 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" % "akka-testkit_2.10" % "2.2.4" % "test"
 )     
 
+unmanagedSourceDirectories in Compile += new File(baseDirectory.value+"/src/main/scala")
+
+unmanagedSourceDirectories in Compile += new File(baseDirectory.value+"/src/main/resources")
+
 play.Project.playScalaSettings
+

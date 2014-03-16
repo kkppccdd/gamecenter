@@ -10,6 +10,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.libs.Akka
 import akka.actor.ActorRef
 import me.firecloud.gamecenter.web.MessageCodecFilter
+import me.firecloud.gamecenter.model.Communication
 
 /**
  * @author kkppccdd
@@ -17,12 +18,17 @@ import me.firecloud.gamecenter.web.MessageCodecFilter
  * @date Jan 1, 2014
  *
  */
+
 object Connector extends Controller {
     val messageCodecFilter = new MessageCodecFilter()
 
-    def index(roomId: String) = WebSocket.using[String] {
+    def communicate(userId: String) = WebSocket.using[String] {
         request => //Concurernt.broadcast returns (Enumerator, Concurrent.Channel)
             val (out, channel) = Concurrent.broadcast[String]
+            
+            // construct player actor
+            val playerActorRef =Akka.system().actorSelection(userId)
+            playerActorRef!channel
             
             //log the message to stdout and send response back to client
             val in = Iteratee.foreach[String] {
@@ -32,7 +38,8 @@ object Connector extends Controller {
                     if (decodedMesg.isDefined) {
                         //the Enumerator returned by Concurrent.broadcast subscribes to the channel and will 
                         //receive the pushed messages
-                        val roomActor = Akka.system().actorSelection(roomId)
+                        
+                        playerActorRef!new Communication(decodedMesg.get)
                         
                         channel push ("RESPONSE: " + decodedMesg.get.cla)
                     } else {
@@ -41,4 +48,5 @@ object Connector extends Controller {
             }
             (in, out)
     }
+
 }

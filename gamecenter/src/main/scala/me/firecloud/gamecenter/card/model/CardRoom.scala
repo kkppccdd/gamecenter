@@ -65,6 +65,7 @@ class CardRoom(id: String) extends Room(id) with FSM[State, Data] with Logging {
 
     when(PuttingCard) {
         case Event(PutCard(userId, cards), Uninitialized) if onturn(userId) =>
+            debug(userId +"put cards "+cards.size)
             val seat = seats((lastPerformSeatIndex + 1) % seats.length)
             cards.foreach(card => {
                 seat.hand = seat.hand - card
@@ -123,7 +124,7 @@ class CardRoom(id: String) extends Room(id) with FSM[State, Data] with Logging {
             reservedCards = reservedCards.drop(cardBatchSize)
             seat.hand = seat.hand ++ cards.toSet[Card]
 
-            info("seat " + seat.player._1 + " hand:" + seat.hand.size)
+            debug("seat " + seat.player._1 + " hand:" + seat.hand.size)
             dealCard
         })
 

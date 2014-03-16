@@ -22,6 +22,8 @@ import me.firecloud.gamecenter.model.RoomFactory
 import me.firecloud.gamecenter.model.RoomDescription
 import akka.actor.Props
 import akka.actor.Actor
+import me.firecloud.gamecenter.model.EndGame
+import me.firecloud.gamecenter.model.Message
 
 /**
  * @author kkppccdd
@@ -181,13 +183,13 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
     	
     	
     	player1.send(roomActorRef,putCard1)
-    	var msg1 = player1.expectMsg(putCard1)
+    	var msg1:Message = player1.expectMsg(putCard1)
     	assertEquals(card1, msg1.asInstanceOf[PutCard].cards)
     	
-    	var msg2 = player2.expectMsg(putCard1)
+    	var msg2:Message = player2.expectMsg(putCard1)
     	assertEquals(card1, msg2.asInstanceOf[PutCard].cards)
     	
-    	var msg3 = player3.expectMsg(putCard1)
+    	var msg3:Message = player3.expectMsg(putCard1)
     	assertEquals(card1, msg3.asInstanceOf[PutCard].cards)
     	
     	// other players put card on turn
@@ -207,5 +209,97 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
     	
     	msg3 = player3.expectMsg(putCard2)
     	assertEquals(card2, msg3.asInstanceOf[PutCard].cards)
+    	
+    	// player3 put 3 cards
+    	
+    	var card3 = hand3.take(3)
+    	hand3=hand2.drop(3)
+    	var putCard3 = new PutCard("3",card3)
+    	player3.send(roomActorRef,putCard3)
+    	
+    	msg1=player1.expectMsg(putCard3)
+    	assertEquals(card3, msg1.asInstanceOf[PutCard].cards)
+    	
+    	msg2 = player2.expectMsg(putCard3)
+    	assertEquals(card3, msg2.asInstanceOf[PutCard].cards)
+    	
+    	msg3 = player3.expectMsg(putCard3)
+    	assertEquals(card3, msg3.asInstanceOf[PutCard].cards)
+    	
+    	// player1 put 5 cards
+    	card1=hand1.take(5)
+    	hand1=hand1.drop(5)
+    	putCard1 = new PutCard("1",card1)
+    	
+    	
+    	player1.send(roomActorRef,putCard1)
+    	msg1 = player1.expectMsg(putCard1)
+    	assertEquals(card1, msg1.asInstanceOf[PutCard].cards)
+    	
+    	msg2 = player2.expectMsg(putCard1)
+    	assertEquals(card1, msg2.asInstanceOf[PutCard].cards)
+    	
+    	msg3 = player3.expectMsg(putCard1)
+    	assertEquals(card1, msg3.asInstanceOf[PutCard].cards)
+    	
+    	// player2 put 6 cards
+    	card2 =hand2.take(6)
+    	hand2=hand2.drop(6)
+    	putCard2 = new PutCard("2",card2)
+    	
+    	player2.send(roomActorRef,putCard2)
+    	
+    	msg1=player1.expectMsg(putCard2)
+    	assertEquals(card2, msg1.asInstanceOf[PutCard].cards)
+    	
+    	msg2 = player2.expectMsg(putCard2)
+    	assertEquals(card2, msg2.asInstanceOf[PutCard].cards)
+    	
+    	msg3 = player3.expectMsg(putCard2)
+    	assertEquals(card2, msg3.asInstanceOf[PutCard].cards)
+    	
+    	// player3 put 7 cards
+    	card3 = hand3.take(7)
+    	hand3=hand2.drop(7)
+    	putCard3 = new PutCard("3",card3)
+    	player3.send(roomActorRef,putCard3)
+    	
+    	msg1=player1.expectMsg(putCard3)
+    	assertEquals(card3, msg1.asInstanceOf[PutCard].cards)
+    	
+    	msg2 = player2.expectMsg(putCard3)
+    	assertEquals(card3, msg2.asInstanceOf[PutCard].cards)
+    	
+    	msg3 = player3.expectMsg(putCard3)
+    	assertEquals(card3, msg3.asInstanceOf[PutCard].cards)
+    	
+    	// player1 put last 1 card
+    	
+    	card1=hand1.take(1)
+    	hand1=hand1.drop(1)
+    	putCard1 = new PutCard("1",card1)
+    	
+    	
+    	player1.send(roomActorRef,putCard1)
+    	msg1 = player1.expectMsg(putCard1)
+    	assertEquals(card1, msg1.asInstanceOf[PutCard].cards)
+    	
+    	msg2 = player2.expectMsg(putCard1)
+    	assertEquals(card1, msg2.asInstanceOf[PutCard].cards)
+    	
+    	msg3 = player3.expectMsg(putCard1)
+    	assertEquals(card1, msg3.asInstanceOf[PutCard].cards)
+    	
+    	
+    	// it should be finish
+    	
+    	msg1 = player1.expectMsgClass(classOf[EndGame])
+    
+    	
+    	msg2 = player2.expectMsgClass(classOf[EndGame])
+ 
+    	
+    	msg3 = player3.expectMsgClass(classOf[EndGame])
+
     }
 }
