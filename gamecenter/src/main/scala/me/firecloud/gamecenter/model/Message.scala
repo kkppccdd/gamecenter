@@ -28,3 +28,8 @@ case class StartGame(userId:String) extends Message(userId){
     def cla:Long=0x01
     def ins:Long=0x02
 }
+
+case class EndGame(userId:String) extends Message(userId){
+    def cla:Long=0x01
+    def ins:Long=0x03
+}

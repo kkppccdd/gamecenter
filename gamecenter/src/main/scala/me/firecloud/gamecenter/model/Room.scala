@@ -7,6 +7,7 @@ import scala.collection.mutable.Map
 import akka.actor.ActorRef
 import akka.actor.Actor
 import akka.actor.Props
+import me.firecloud.gamecenter.card.model.Card
 
 /**
  * @author kkppccdd
@@ -21,7 +22,9 @@ class RoomDescription(val kind:String,val name:String) {
 	def id(newId:String)=_id=newId
 }
 
-class Seat(val player:Tuple2[String,ActorRef])
+class Seat(val player:Tuple2[String,ActorRef]){
+    var hand:Set[Card]=Set()
+}
 
 abstract class Room(val id:String) extends Actor{
     var seats:List[Seat]=List()
