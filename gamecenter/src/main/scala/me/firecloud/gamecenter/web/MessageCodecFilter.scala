@@ -45,7 +45,7 @@ class MessageCodecFilter {
 
     def decode(json: String): Option[Message] = {
         try {
-        	val key = (mapper.readTree(json).findValue("CLA").asLong(),mapper.readTree(json).findValue("INS").asLong())
+        	val key = (mapper.readTree(json).findValue("cla").asLong(),mapper.readTree(json).findValue("ins").asLong())
             val messageCodec = messageCodecs(key)
             Some(messageCodec.decode(json))
         } catch {

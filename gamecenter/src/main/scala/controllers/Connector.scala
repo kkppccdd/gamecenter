@@ -10,7 +10,9 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.libs.Akka
 import akka.actor.ActorRef
 import me.firecloud.gamecenter.web.MessageCodecFilter
-import me.firecloud.gamecenter.model.Communication
+import me.firecloud.utils.logging.Logging
+import akka.actor.Props
+import me.firecloud.gamecenter.model.ClientConnectted
 
 /**
  * @author kkppccdd
@@ -19,7 +21,7 @@ import me.firecloud.gamecenter.model.Communication
  *
  */
 
-object Connector extends Controller {
+object Connector extends Controller with Logging{
     val messageCodecFilter = new MessageCodecFilter()
 
     def communicate(userId: String) = WebSocket.using[String] {
@@ -27,21 +29,23 @@ object Connector extends Controller {
             val (out, channel) = Concurrent.broadcast[String]
             
             // construct player actor
-            val playerActorRef =Akka.system().actorSelection(userId)
-            playerActorRef!channel
+            
+            
+            val playerSupervisor =Akka.system().actorSelection("user/players")
+            
+            playerSupervisor!new ClientConnectted(userId,channel)
             
             //log the message to stdout and send response back to client
             val in = Iteratee.foreach[String] {
                 msg =>
-                    println(msg)
+                    info(msg)
                     val decodedMesg = messageCodecFilter.decode(msg)
                     if (decodedMesg.isDefined) {
                         //the Enumerator returned by Concurrent.broadcast subscribes to the channel and will 
                         //receive the pushed messages
-                        
-                        playerActorRef!new Communication(decodedMesg.get)
-                        
-                        channel push ("RESPONSE: " + decodedMesg.get.cla)
+                        val playerActorRef=Akka.system().actorSelection("user/players/"+userId)
+                        playerActorRef! decodedMesg.get                        
+                        //channel push ("RESPONSE: " + decodedMesg.get.cla)
                     } else {
                         channel push ("RESPONSE: ERROR MESSAGE")
                     }

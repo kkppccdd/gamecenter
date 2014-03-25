@@ -4,6 +4,7 @@
 package me.firecloud.utils.logging
 
 import org.slf4j.LoggerFactory
+import play.api.Logger
 
 
 /**
@@ -13,9 +14,9 @@ import org.slf4j.LoggerFactory
  *
  */
 trait Logging {
-    private[this] val logger = LoggerFactory.getLogger(getClass())
-    def debug(message: => String) = if (logger.isDebugEnabled()) logger.debug(message)
-    def debug(message: => String, ex: Throwable) = if (logger.isDebugEnabled()) logger.debug(message, ex)
+    private[this] val logger = Logger.logger
+    def debug(message: => String) =  logger.debug(message)
+    def debug(message: => String, ex: Throwable) = logger.debug(message, ex)
     def debugValue[T](valueName: String, value: => T): T = {
         val result: T = value
         debug(valueName + " == " + result.toString)

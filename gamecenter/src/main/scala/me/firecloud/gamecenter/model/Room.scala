@@ -16,17 +16,19 @@ import me.firecloud.gamecenter.card.model.Card
  *
  */
 class RoomDescription(val kind:String,val name:String) {
-	var _id:String=null
-	
-	def id:String=_id
-	def id(newId:String)=_id=newId
+	var id:String=null
+
 }
 
 class Seat(val player:Tuple2[String,ActorRef]){
     var hand:Set[Card]=Set()
+    
+    override def equals(obj:Any):Boolean={
+        return obj.isInstanceOf[Seat] && obj.asInstanceOf[Seat].player._1 == this.player._1
+    }
 }
 
-abstract class Room(val id:String) extends Actor{
+abstract class Room(val id:String,val seatNum:Int) extends Actor{
     var seats:List[Seat]=List()
 }
 
