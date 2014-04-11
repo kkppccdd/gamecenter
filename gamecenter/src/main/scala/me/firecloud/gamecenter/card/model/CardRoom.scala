@@ -35,8 +35,8 @@ class CardRoomFactory extends RoomFactory {
     override def kind: String = "card"
     override def build(description: RoomDescription): Tuple2[RoomDescription, Props] = {
         val id = UUID.randomUUID().toString()
-        description.asInstanceOf[CardRoomDescription].id = id
-        (description, Props(new CardRoom(id, description.asInstanceOf[CardRoomDescription].playerNum)))
+        description.id = id
+        (description, Props(new CardRoom(id, 3)))
     }
 }
 
@@ -200,9 +200,9 @@ class CardRoom(id: String, seatNum: Int) extends Room(id, seatNum) with FSM[Stat
     protected def init: Unit = {
         // init cycles
         defaultCycle = new SeatCycle(seats)
-        for (i <- 1 to 33) {
-            reservedCards = new Card(i) :: reservedCards
-        }
+
+        reservedCards = PokerPack.cards
+
     }
 
     protected def dealCard: Unit = {
