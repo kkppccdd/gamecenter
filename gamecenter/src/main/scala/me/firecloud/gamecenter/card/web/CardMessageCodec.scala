@@ -22,6 +22,8 @@ import me.firecloud.gamecenter.model.Notification
 import me.firecloud.gamecenter.model.Ask
 import me.firecloud.gamecenter.card.model.AppendCard
 import me.firecloud.utils.logging.Logging
+import me.firecloud.gamecenter.model.Ready
+import me.firecloud.gamecenter.card.model.Bet
 
 /**
  * @author kkppccdd
@@ -31,7 +33,9 @@ import me.firecloud.utils.logging.Logging
  */
 class CardMessageCodec extends MessageCodec with Logging {
 
-    override def supportedMessageCodes = Set(DealCard.key, JoinRoom.key, StartGame.key, EndGame.key, Notification.key, Ask.key, PutCard.key, Pass.key, AppendCard.key)
+    override def supportedMessageCodes = Set(DealCard.key, JoinRoom.key,
+        StartGame.key, EndGame.key, Notification.key, Ask.key, PutCard.key,
+        Pass.key, AppendCard.key, Ready.key, Bet.key)
 
     override def encode(message: Message): String = {
         mapper.writeValueAsString(message)
@@ -41,15 +45,18 @@ class CardMessageCodec extends MessageCodec with Logging {
         try {
             val key = (mapper.readTree(json).findValue("cla").asLong(), mapper.readTree(json).findValue("ins").asLong())
             key match {
-                case (1L, 1L) => mapper.readValue(json, typeReference[JoinRoom])
-                case (1L, 2L) => mapper.readValue(json, typeReference[StartGame])
-                case (1L, 3L) => mapper.readValue(json, typeReference[EndGame])
-                case (1L, 4L) => mapper.readValue(json, typeReference[Notification])
-                case (1L, 5L) => mapper.readValue(json, typeReference[Ask])
-                case (2L, 1L) => mapper.readValue(json, typeReference[PutCard])
-                case (2L, 2L) => mapper.readValue(json, typeReference[Pass])
-                case (2L, 3L) => mapper.readValue(json, typeReference[DealCard])
-                case (2L, 4L) => mapper.readValue(json, typeReference[AppendCard])
+                case (1L, 1L) => mapper.readValue[JoinRoom](json)
+                case (1L, 2L) => mapper.readValue[StartGame](json)
+                case (1L, 3L) => mapper.readValue[EndGame](json)
+                case (1L, 4L) => mapper.readValue[Notification](json)
+                case (1L, 5L) => mapper.readValue[Ask](json)
+                //case (2L, 1L) => mapper.readValue(json, typeReference[PutCard])
+                case (1L, 6L) => mapper.readValue[Ready](json)
+                case (2L, 1L) => mapper.readValue[PutCard](json)
+                case (2L, 2L) => mapper.readValue[Pass](json)
+                case (2L, 3L) => mapper.readValue[DealCard](json)
+                case (2L, 4L) => mapper.readValue[AppendCard](json)
+                case (2L, 5L) => mapper.readValue[Bet](json)
                 case _ =>
                     warn("unsupported message type")
                     null

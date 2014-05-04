@@ -40,9 +40,13 @@ class PlayerActor(player: Player) extends Actor with Logging {
             notification.msg match{
                 case msg:JoinRoom=>
                     roomActorRef=context.actorSelection("/user/"+msg.roomId)
+                case _=>
             }
             
             wsChannel push messageCodecFilter.encode(notification).get
+        case ask:Ask=>
+            // pass to client side
+            wsChannel push messageCodecFilter.encode(ask).get
         case msg: JoinRoom =>
             // lookup room actor
         	val roomActor = context.actorSelection("/user/"+msg.roomId)

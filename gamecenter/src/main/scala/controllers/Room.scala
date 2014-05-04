@@ -15,6 +15,10 @@ import me.firecloud.gamecenter.model.RoomDescription
 import me.firecloud.gamecenter.model.RoomFactoryManager
 import play.libs.Akka
 import me.firecloud.utils.logging.Logging
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
+import com.fasterxml.jackson.module.scala.OptionModule
+import com.fasterxml.jackson.module.scala.TupleModule
+import com.fasterxml.jackson.databind.MapperFeature
 
 /**
  * @author kkppccdd
@@ -23,16 +27,21 @@ import me.firecloud.utils.logging.Logging
  *
  */
 object Hall extends Controller with Logging{
-	val mapper = new ObjectMapper()
+	val mapper = new ObjectMapper() with ScalaObjectMapper
+    
+    val module = new OptionModule with TupleModule {}
+    
     mapper.registerModule(DefaultScalaModule)
+    mapper.registerModule(module)
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
     
     
     def post =Action{request=>{
         // create room model
         val payload = request.body.asJson
         
-        val roomConfig = mapper.readValue(payload.get.toString, typeReference[RoomDescription]).asInstanceOf[RoomDescription]
+        val roomConfig = mapper.readValue[RoomDescription](payload.get.toString)
         
         
         // create room actor
@@ -45,6 +54,13 @@ object Hall extends Controller with Logging{
         Ok(mapper.writeValueAsString(roomDescription))
     }
     }
+	
+	def enterRoom(roomId:String)=Action{
+	    request=>{
+	        val selfId = request.getQueryString("userId").get
+	        Ok(views.html.room(roomId, selfId))//.withHeaders("Access-Control-Allow-Origin"->"*")
+	    }
+	}
 	
 	
 	protected[this] def typeReference[T: Manifest] = new TypeReference[T] {

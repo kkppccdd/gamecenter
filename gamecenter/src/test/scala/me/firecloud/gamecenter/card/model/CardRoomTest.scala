@@ -22,6 +22,8 @@ import me.firecloud.gamecenter.model.Message
 import me.firecloud.gamecenter.model.PlayerActor
 import me.firecloud.gamecenter.model.Notification
 import me.firecloud.gamecenter.model.Ask
+import me.firecloud.gamecenter.model.Ready
+import me.firecloud.gamecenter.model.PlayerPropertyChange
 
 /**
  * @author kkppccdd
@@ -148,31 +150,51 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
 
         roomActorRef ! startGameMsg
 
+        // player1 received start game message
+        player1.expectMsgClass(classOf[Notification]).msg.isInstanceOf[StartGame]
+        // player2 received start game message
+        player2.expectMsgClass(classOf[Notification]).msg.isInstanceOf[StartGame]
+        // player3 received start game message
+        player3.expectMsgClass(classOf[Notification]).msg.isInstanceOf[StartGame]
+
+        // player1 send ready message
+        val ready1 = new Ready("1");
+        player1.send(roomActorRef, ready1);
+        // player2 send ready message
+        val ready2 = new Ready("2");
+        player2.send(roomActorRef, ready2);
+        //player3 send ready message
+        val ready3 = new Ready("3");
+        player3.send(roomActorRef, ready3);
+
+        // player1 received three deal card messages
         val msgs1 = player1.receiveN(3)
         assertEquals(3, msgs1.size)
         msgs1.foreach(msg => {
             assertTrue(msg.asInstanceOf[Notification].msg.isInstanceOf[DealCard])
-            assertEquals(11, msg.asInstanceOf[Notification].msg.asInstanceOf[DealCard].cards.size)
+            assertEquals(17, msg.asInstanceOf[Notification].msg.asInstanceOf[DealCard].cards.size)
             if (msg.asInstanceOf[Notification].msg.asInstanceOf[DealCard].toUserId == "1") {
                 hand1 = msg.asInstanceOf[Notification].msg.asInstanceOf[DealCard].cards
             }
         })
 
+        // player2 received three deal card messages
         val msgs2 = player2.receiveN(3)
         assertEquals(3, msgs2.size)
         msgs2.foreach(msg => {
             assertTrue(msg.asInstanceOf[Notification].msg.isInstanceOf[DealCard])
-            assertEquals(11, msg.asInstanceOf[Notification].msg.asInstanceOf[DealCard].cards.size)
+            assertEquals(17, msg.asInstanceOf[Notification].msg.asInstanceOf[DealCard].cards.size)
             if (msg.asInstanceOf[Notification].msg.asInstanceOf[DealCard].toUserId == "2") {
                 hand2 = msg.asInstanceOf[Notification].msg.asInstanceOf[DealCard].cards
             }
         })
 
+        // player3 received three deal card messages
         val msgs3 = player3.receiveN(3)
         assertEquals(3, msgs3.size)
         msgs3.foreach(msg => {
             assertTrue(msg.asInstanceOf[Notification].msg.isInstanceOf[DealCard])
-            assertEquals(11, msg.asInstanceOf[Notification].msg.asInstanceOf[DealCard].cards.size)
+            assertEquals(17, msg.asInstanceOf[Notification].msg.asInstanceOf[DealCard].cards.size)
             if (msg.asInstanceOf[Notification].msg.asInstanceOf[DealCard].toUserId == "3") {
                 hand3 = msg.asInstanceOf[Notification].msg.asInstanceOf[DealCard].cards
             }
@@ -180,7 +202,7 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
 
         askActions1 = player1.expectMsgClass(classOf[Ask]).actions
 
-        assertEquals(List(PutCard.key), askActions1)
+        assertEquals(List(Bet.key), askActions1)
 
     }
 
@@ -190,10 +212,99 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
         testStartGame()
 
         // check hands
-        assertEquals(11, hand1.size)
-        assertEquals(11, hand2.size)
-        assertEquals(11, hand3.size)
+        assertEquals(17, hand1.size)
+        assertEquals(17, hand2.size)
+        assertEquals(17, hand3.size)
 
+        // bet start by player1
+
+        // player1 bet 
+        var bet1 = new Bet("1", 32)
+        player1.send(roomActorRef, bet1)
+        
+        // player1 received notification
+        var betNotify1 = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[Bet]
+        
+        assertEquals("1", betNotify1.userId)
+        assertEquals(32, betNotify1.amount)
+        
+        // player2 received notification
+        var betNotify2 = player2.expectMsgClass(classOf[Notification]).msg.asInstanceOf[Bet]
+        
+        assertEquals("1", betNotify2.userId)
+        assertEquals(32, betNotify2.amount)
+        
+        // player3 received notification
+        var betNotify3 = player3.expectMsgClass(classOf[Notification]).msg.asInstanceOf[Bet]
+        
+        assertEquals("1", betNotify3.userId)
+        assertEquals(32, betNotify3.amount)
+
+        // player2 bet 
+        var bet2 = new Bet("2", 22)
+        player2.send(roomActorRef, bet2)
+        
+        // player1 received notification
+        betNotify1 = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[Bet]
+        
+        assertEquals("2", betNotify1.userId)
+        assertEquals(22, betNotify1.amount)
+        
+        // player2 received notification
+        betNotify2 = player2.expectMsgClass(classOf[Notification]).msg.asInstanceOf[Bet]
+        
+        assertEquals("2", betNotify2.userId)
+        assertEquals(22, betNotify2.amount)
+        
+        // player3 received notification
+        betNotify3 = player3.expectMsgClass(classOf[Notification]).msg.asInstanceOf[Bet]
+        
+        assertEquals("2", betNotify3.userId)
+        assertEquals(22, betNotify3.amount)
+
+        // player3 bet 
+        var bet3 = new Bet("3", 12)
+        player3.send(roomActorRef, bet3)
+        
+        // player1 received notification
+        betNotify1 = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[Bet]
+        
+        assertEquals("3", betNotify1.userId)
+        assertEquals(12, betNotify1.amount)
+        
+        // player2 received notification
+        betNotify2 = player2.expectMsgClass(classOf[Notification]).msg.asInstanceOf[Bet]
+        
+        assertEquals("3", betNotify2.userId)
+        assertEquals(12, betNotify2.amount)
+        
+        // player3 received notification
+        betNotify3 = player3.expectMsgClass(classOf[Notification]).msg.asInstanceOf[Bet]
+        
+        assertEquals("3", betNotify3.userId)
+        assertEquals(12, betNotify3.amount)
+        
+        // all players received message which player1 has been the landlord
+        
+        var propsChange1 = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[PlayerPropertyChange]
+        assertEquals("1",propsChange1.userId)
+        assertEquals(List(("role","LANDLORD")),propsChange1.changes)
+        
+        var propsChange2 = player2.expectMsgClass(classOf[Notification]).msg.asInstanceOf[PlayerPropertyChange]
+        assertEquals("1",propsChange2.userId)
+        assertEquals(List(("role","LANDLORD")),propsChange2.changes)
+        
+        var propsChange3 = player3.expectMsgClass(classOf[Notification]).msg.asInstanceOf[PlayerPropertyChange]
+        assertEquals("1",propsChange3.userId)
+        assertEquals(List(("role","LANDLORD")),propsChange3.changes)
+        
+        
+        // player1 received ask put card message
+        var msg1: Message = player1.expectMsgClass(classOf[Ask])
+        
+        assertEquals(List(PutCard.key),msg1.asInstanceOf[Ask].actions)
+        
+        
         // put card start by player1
 
         // player1 put 5 cards
@@ -202,7 +313,7 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
         var putCard1 = new PutCard("1", card1)
 
         player1.send(roomActorRef, putCard1)
-        var msg1: Message = player1.expectMsgClass(classOf[Notification]).msg
+        msg1 = player1.expectMsgClass(classOf[Notification]).msg
         assertEquals(card1, msg1.asInstanceOf[PutCard].cards)
 
         var msg2: Message = player2.expectMsgClass(classOf[Notification]).msg
@@ -319,8 +430,8 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
 
         // player1 put last 1 card
 
-        card1 = hand1.take(1)
-        hand1 = hand1.drop(1)
+        card1 = hand1.take(7)
+        hand1 = hand1.drop(7)
         appendCard1 = new AppendCard("1", card1)
 
         player1.send(roomActorRef, appendCard1)
@@ -349,9 +460,9 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
         testStartGame()
 
         // check hands
-        assertEquals(11, hand1.size)
-        assertEquals(11, hand2.size)
-        assertEquals(11, hand3.size)
+        assertEquals(17, hand1.size)
+        assertEquals(17, hand2.size)
+        assertEquals(17, hand3.size)
 
         // put card start by player1
 
@@ -412,8 +523,8 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
         assertEquals(List(PutCard.key), msg1.asInstanceOf[Ask].actions)
 
         // player1 put all cards
-        card1 = hand1.take(6)
-        hand1 = hand1.drop(6)
+        card1 = hand1.take(12)
+        hand1 = hand1.drop(12)
         putCard1 = new PutCard("1", card1)
 
         player1.send(roomActorRef, putCard1)

@@ -7,11 +7,16 @@ import me.firecloud.gamecenter.model.Message
 import com.fasterxml.jackson.core.`type`.TypeReference
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
-
 import scala.util.parsing.json.JSON
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationConfig
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.MapperFeature
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
+import com.fasterxml.jackson.module.scala.OptionModule
+import com.fasterxml.jackson.module.scala.TupleModule
 
 /**
  * @author kkppccdd
@@ -20,9 +25,14 @@ import com.fasterxml.jackson.databind.DeserializationFeature
  *
  */
 abstract class MessageCodec {
-    val mapper = new ObjectMapper()
+    val mapper = new ObjectMapper() with ScalaObjectMapper
+    
+    val module = new OptionModule with TupleModule {}
+    
     mapper.registerModule(DefaultScalaModule)
+    mapper.registerModule(module)
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
 
     def encode(message: Message): String
     def decode(json: String): Message

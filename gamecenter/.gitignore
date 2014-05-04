@@ -15,3 +15,5 @@ dist
 /.settings
 /.target
 /bin
+/hs_err_pid29681.log
+/.cache

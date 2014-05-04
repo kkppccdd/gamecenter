@@ -5,6 +5,7 @@ package me.firecloud.gamecenter.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonPropertyOrder
 
 /**
  * @author kkppccdd
@@ -28,7 +29,8 @@ object JoinRoom extends Message("0"){
     def ins:Long=0x01
     
 }
-case class JoinRoom(userId:String,roomId:String) extends Message(userId){
+
+case class JoinRoom(userId:String,roomId:String,position:Int = -1) extends Message(userId){
     def cla:Long=JoinRoom.cla
     def ins:Long=JoinRoom.ins
 }
@@ -40,6 +42,7 @@ case class StartGame(userId:String) extends Message(userId){
     def cla:Long=StartGame.cla
     def ins:Long=StartGame.ins
 }
+
 
 object EndGame extends Message("0"){
     def cla:Long=0x01
@@ -68,4 +71,25 @@ object Ask extends Message("0"){
 case class Ask(targetUserId:String,actions:List[Tuple2[Long,Long]]) extends Message(Dealer.id){
     def cla:Long=Ask.cla
     def ins:Long=Ask.ins
+}
+
+
+object Ready extends Message("0"){
+    def cla:Long=0x01
+    def ins:Long=0x06
+}
+
+case class Ready(userId:String) extends Message(userId){
+    def cla:Long=Ready.cla
+    def ins:Long=Ready.ins
+}
+
+object PlayerPropertyChange extends Message("0"){
+    def cla:Long=0x01
+    def ins:Long=0x07
+}
+
+case class PlayerPropertyChange(userId:String,changes:List[Tuple2[String,String]]) extends Message(userId){
+    def cla:Long=PlayerPropertyChange.cla
+    def ins:Long=PlayerPropertyChange.ins
 }
