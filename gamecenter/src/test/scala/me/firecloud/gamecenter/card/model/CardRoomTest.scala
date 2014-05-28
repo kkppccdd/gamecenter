@@ -92,6 +92,9 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
         var resp2 = player2.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
 
         assertEquals("player2 joint", joinRoom2.userId, resp1.userId)
+        assertEquals("player2 joint", "1", resp2.userId)
+        
+        resp2 = player2.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
         assertEquals("player2 joint", joinRoom2.userId, resp2.userId)
 
         player3.send(roomActorRef, joinRoom3)
@@ -101,11 +104,17 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
 
         assertEquals("player3 joint", joinRoom3.userId, resp1.userId)
         assertEquals("player3 joint", joinRoom3.userId, resp2.userId)
+        assertEquals("player3 joint", "1", resp3.userId)
+        
+        resp3 = player3.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
+        assertEquals("player3 joint", "2", resp3.userId)
+        
+        resp3 = player3.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
         assertEquals("player3 joint", joinRoom3.userId, resp3.userId)
 
-        val askActions1 = player1.expectMsgClass(classOf[Ask]).actions
+        val startGame = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[StartGame]
 
-        assertEquals(List(StartGame.key), askActions1)
+
 
     }
 
@@ -120,8 +129,8 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
         val joinRoom3 = new JoinRoom("3", description.id)
 
         player1.send(roomActorRef, joinRoom1)
-        var resp1 = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
 
+        var resp1 = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
         assertEquals("player1 joint", joinRoom1.userId, resp1.userId)
 
         player2.send(roomActorRef, joinRoom2)
@@ -129,6 +138,9 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
         var resp2 = player2.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
 
         assertEquals("player2 joint", joinRoom2.userId, resp1.userId)
+        assertEquals("player2 joint", "1", resp2.userId)
+        
+        resp2 = player2.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
         assertEquals("player2 joint", joinRoom2.userId, resp2.userId)
 
         player3.send(roomActorRef, joinRoom3)
@@ -138,17 +150,21 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
 
         assertEquals("player3 joint", joinRoom3.userId, resp1.userId)
         assertEquals("player3 joint", joinRoom3.userId, resp2.userId)
+        assertEquals("player3 joint", "1", resp3.userId)
+        
+        resp3 = player3.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
+        assertEquals("player3 joint", "2", resp3.userId)
+        
+        resp3 = player3.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
         assertEquals("player3 joint", joinRoom3.userId, resp3.userId)
 
-        var askActions1 = player1.expectMsgClass(classOf[Ask]).actions
-
-        assertEquals(List(StartGame.key), askActions1)
+        //val startGame = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[StartGame]
 
         // start game
 
-        val startGameMsg = new StartGame(Dealer.id)
+        //val startGameMsg = new StartGame(Dealer.id)
 
-        roomActorRef ! startGameMsg
+        //roomActorRef ! startGameMsg
 
         // player1 received start game message
         player1.expectMsgClass(classOf[Notification]).msg.isInstanceOf[StartGame]
@@ -200,14 +216,14 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
             }
         })
 
-        askActions1 = player1.expectMsgClass(classOf[Ask]).actions
+        val askActions1 = player1.expectMsgClass(classOf[Ask]).actions
 
         assertEquals(List(Bet.key), askActions1)
 
     }
 
     @Test
-    def testPutCard() {
+    def testPutCardAppendCardPass() {
         //
         testStartGame()
 
@@ -297,6 +313,15 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
         var propsChange3 = player3.expectMsgClass(classOf[Notification]).msg.asInstanceOf[PlayerPropertyChange]
         assertEquals("1",propsChange3.userId)
         assertEquals(List(("role","LANDLORD")),propsChange3.changes)
+        
+        // all players received message which dealer deal last 3 cards to the landlord
+        var lastDealMsg=player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[DealCard]
+        assertEquals("1",lastDealMsg.toUserId)
+        
+        hand1=hand1++lastDealMsg.cards
+        
+        assertEquals("1",player2.expectMsgClass(classOf[Notification]).msg.asInstanceOf[DealCard].toUserId)
+        assertEquals("1",player3.expectMsgClass(classOf[Notification]).msg.asInstanceOf[DealCard].toUserId)
         
         
         // player1 received ask put card message
@@ -389,21 +414,21 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
         msg2 = player2.expectMsgClass(classOf[Ask])
         assertEquals(List(AppendCard.key, Pass.key), msg2.asInstanceOf[Ask].actions)
 
-        // player2 put 6 cards
+        // player2 pass
         card2 = hand2.take(6)
         hand2 = hand2.drop(6)
-        putCard2 = new AppendCard("2", card2)
+        var pass2 = new Pass("2")
 
-        player2.send(roomActorRef, putCard2)
+        player2.send(roomActorRef, pass2)
 
         msg1 = player1.expectMsgClass(classOf[Notification]).msg
-        assertEquals(card2, msg1.asInstanceOf[AppendCard].cards)
+        assertEquals("2", msg1.asInstanceOf[Pass].userId)
 
         msg2 = player2.expectMsgClass(classOf[Notification]).msg
-        assertEquals(card2, msg2.asInstanceOf[AppendCard].cards)
+        assertEquals("2", msg2.asInstanceOf[Pass].userId)
 
         msg3 = player3.expectMsgClass(classOf[Notification]).msg
-        assertEquals(card2, msg3.asInstanceOf[AppendCard].cards)
+        assertEquals("2", msg3.asInstanceOf[Pass].userId)
 
         //ask player3 to append or pass
         msg3 = player3.expectMsgClass(classOf[Ask])
@@ -430,8 +455,8 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
 
         // player1 put last 1 card
 
-        card1 = hand1.take(7)
-        hand1 = hand1.drop(7)
+        card1 = hand1.take(10)
+        hand1 = hand1.drop(10)
         appendCard1 = new AppendCard("1", card1)
 
         player1.send(roomActorRef, appendCard1)
@@ -454,7 +479,7 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
 
     }
 
-    @Test
+    
     def testPass() {
         //
         testStartGame()

@@ -29,6 +29,8 @@ object UserDao extends ModelCompanion[Player, String] {
   def findByCountry(country: String) = dao.find(MongoDBObject("address.country" -> country))
 }
 
+
+
 /**
  * @author kkppccdd
  * @email kkppccdd@gmail.com
@@ -45,14 +47,21 @@ object RestService extends Controller {
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
 
+    def getClass(kind:String):Class[_]={
+        return classOf[Player]
+    }
+    
     def post(kind:String)=Action{
         request=>
             val entity = mapper.readValue[Player](request.body.asText.get)
+
+            //val dao = getDao(kind)
             
-            val dao = new SalatDAO[Player,String](collection=mongoCollection("user")){}
-            
-            dao.save(entity)
+            //dao.save(entity)
             
             Ok(mapper.writeValueAsString(entity))
     }
+
+    
+    
 }

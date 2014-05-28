@@ -7,7 +7,7 @@ libraryDependencies ++= Seq(
   jdbc,
   anorm,
   cache,
-  "se.radley" %% "play-plugins-salat" % "1.4.0",
+  "se.radley" %% "play-plugins-salat" % "1.4.0" withSources(),
   "com.typesafe.akka" %% "akka-testkit" % "2.2.4" % "test" withSources(),
   "com.ning" % "async-http-client" % "1.8.3" % "test" withSources(),
   "org.apache.httpcomponents" % "httpclient" % "4.3.3" % "test" withSources()

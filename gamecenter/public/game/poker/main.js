@@ -17,9 +17,19 @@ cc.game.onStart = function() {
 
 	// load resources
 	cc.LoaderScene.preload(g_resources, function() {
-		room.scenes.waitPlayerScene= new WaitPlayerScene();
-		room.scenes.mainScene=new MainScene();
-		cc.director.runScene(room.scenes.waitPlayerScene);
+		//room.scenes.waitPlayerScene= new WaitPlayerScene();
+		//room.scenes.mainScene=new MainScene();
+		//cc.director.runScene(room.scenes.waitPlayerScene);
+		
+		// for test 
+		fc.roomInfo.seatSize=3;
+		
+		
+		CardPack.init();
+		//fc.room.init();
+		
+		cc.director.runScene(new TestScene());
+		
 	}, this);
 
 };

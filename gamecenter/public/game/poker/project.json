@@ -10,6 +10,7 @@
 
     "jsList" : [
         "/assets/game/poker/src/resource.js",
-        "/assets/game/poker/src/poker.js"
+        "/assets/game/poker/src/room.js",
+        "/assets/game/poker/src/test.js"
     ]
 }

@@ -61,8 +61,8 @@ class SeatCycle(seats: List[Seat]) {
     def current: Seat = seats(currentPos)
     // check if on turn
     def onturn(playerId: String) = current.player._1 == playerId
-    
-    def head:Seat=seats(0)
+
+    def head: Seat = seats(0)
 
 }
 
@@ -91,9 +91,11 @@ class CardRoom(id: String, seatNum: Int) extends Room(id, seatNum) with FSM[Stat
 
             // 3. calculate acceptable subsequent actions
             // check whether it's able to start
-            if (!seats.exists(_.state=="FREE")) {
+            if (!seats.exists(_.state == "FREE")) {
                 // ask start game
-                ask(seats(0), List(StartGame.key))
+                //ask(seats(0), List(StartGame.key))
+                
+                receive(new StartGame(Dealer.id))
             }
             // 4. transform FSM state
             stay
@@ -135,37 +137,54 @@ class CardRoom(id: String, seatNum: Int) extends Room(id, seatNum) with FSM[Stat
 
         }
     }
-    
-    when(BetPhase){
-        case Event(Bet(userId,amount),Uninitialized) if defaultCycle.onturn(userId)=>{
-            seats.find(seat => seat.player._1 == userId).get.bet=amount
-            
-            // notify all
-            val betMsg = new Bet(userId,amount);
-            
-            defaultCycle.move
-            
-            notifyAll(betMsg)
-            
-            // check whether all players have bet
-            
-            if(defaultCycle.current.player._1 == defaultCycle.head.player._1){
-                // all players have bet
-                
-                
-                // decide who is the landlord
-                
-                val maxBetSeat = seats.maxBy(_.bet)
-                maxBetSeat.role="LANDLORD"
 
-                notifyAll(new PlayerPropertyChange(maxBetSeat.player._1,List(("role","LANDLORD"))))
+    when(BetPhase) {
+        case Event(Bet(userId, amount), Uninitialized) if defaultCycle.onturn(userId) => {
+            seats.find(seat => seat.player._1 == userId).get.bet = amount
+
+            // notify all
+            val betMsg = new Bet(userId, amount);
+
+            defaultCycle.move
+
+            notifyAll(betMsg)
+
+            // check whether all players have bet
+
+            if (defaultCycle.current.player._1 == defaultCycle.head.player._1) {
+                // all players have bet
+
+                // decide who is the landlord
+
+                val maxBetSeat = seats.maxBy(_.bet)
+                maxBetSeat.role = "LANDLORD"
+
+                notifyAll(new PlayerPropertyChange(maxBetSeat.player._1, List(("role", "LANDLORD"))))
+
+                // deal last three cards
+
+                var cards = reservedCards.take(3)
+                reservedCards = reservedCards.drop(3)
+
+                maxBetSeat.hand = maxBetSeat.hand ++ cards
+
+                debug("landlord hand cards:" + maxBetSeat.hand.size)
                 
+                // move default turn to maxBetSeat
+                while(defaultCycle.current.player._1 != maxBetSeat.player._1){
+                    defaultCycle.move
+                }
+
+                notifyAll(new DealCard(Dealer.id, maxBetSeat.player._1, cards))
+
                 // ask landlord put card
-                
-                ask(maxBetSeat,List(PutCard.key))
-                
+
+                ask(maxBetSeat, List(PutCard.key))
+
                 goto(StartPutCard)
-            }else{
+            } else {
+                // ask next seat to bet
+                ask(defaultCycle.current,List(Bet.key))
                 stay
             }
         }
@@ -295,11 +314,19 @@ class CardRoom(id: String, seatNum: Int) extends Room(id, seatNum) with FSM[Stat
     }
 
     protected def join(playerId: String, playerActorRef: ActorRef): Unit = {
-        
+
+        val jointSeats = seats.zipWithIndex.filter(_._1.state == "OCCUPIED")
+
         val (seat, index) = seats.zipWithIndex.find(_._1.state == "FREE").get
-        seat.player=(playerId, playerActorRef)
+        seat.player = (playerId, playerActorRef)
         seat.occupy
-        
+
+        // notify new player the players whom had joint
+        jointSeats.foreach(x => {
+            val msg = new JoinRoom(x._1.player._1, id, x._2)
+            notify(seat, msg)
+        }
+        )
 
         // construct join room message
         val joinRoom = new JoinRoom(playerId, id, index)
@@ -317,13 +344,13 @@ class CardRoom(id: String, seatNum: Int) extends Room(id, seatNum) with FSM[Stat
      */
     protected def notifyAll(msg: Message): Unit = {
         seats.foreach(seat => {
-            if(seat.state != "FREE"){
-            	seat.player._2 ! new Notification(msg)
+            if (seat.state != "FREE") {
+                seat.player._2 ! new Notification(msg)
             }
         })
     }
-    
-    protected def notify(seat:Seat,msg:Message):Unit={
+
+    protected def notify(seat: Seat, msg: Message): Unit = {
         seat.player._2 ! new Notification(msg)
     }
 

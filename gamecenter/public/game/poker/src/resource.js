@@ -10,25 +10,14 @@ var RES={
 			farmer:"farmer.png",
 			landlord:"landlord.png",
 			button:"button.png",
+			button_highlight:"button-highlight.png",
 			cards:"cards.png",
 			gold_coins:"gold-coins.png",
 			dialog_background:"dialog-bg.png",
-			poker:{
-				spades_ace:"spades-ace.png",
-				spades_2:"spades-2.png",
-				spades_3:"spades-3.png",
-				spades_4:"spades-4.png",
-				spades_5:"spades-5.png",
-				spades_6:"spades-6.png",
-				spades_7:"spades-7.png",
-				spades_8:"spades-8.png",
-				spades_9:"spades-9.png",
-				spades_10:"spades-10.png",
-				spades_jack:"spades-jack.png",
-				spades_queen:"spades-queen.png",
-				spades_king:"spades-king.png",
-				back:"back.jpg"
-			}
+			card_icon:"back.jpg",
+			tip_left:"tip-left.png",
+			tip_right:"tip-right.png"
+				
 		}
 }
 
@@ -61,20 +50,11 @@ var g_resources =	[
     RES.image.farmer,
     RES.image.landlord,
     RES.image.button,
+    RES.image.button_highlight,
     
-    RES.image.poker.spades_ace,
-    RES.image.poker.spades_2,
-    RES.image.poker.spades_3,
-    RES.image.poker.spades_4,
-    RES.image.poker.spades_5,
-    RES.image.poker.spades_6,
-    RES.image.poker.spades_7,
-    RES.image.poker.spades_8,
-    RES.image.poker.spades_9,
-    RES.image.poker.spades_10,
-    RES.image.poker.spades_jack,
-    RES.image.poker.spades_queen,
-    RES.image.poker.spades_king
+    RES.image.card_icon,
+    RES.image.tip_left,
+    RES.image.tip_right
     //plist
 
     //fnt

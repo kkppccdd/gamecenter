@@ -1081,12 +1081,7 @@ var RightSeat = function(size) {
  * card images
  */
 
-var PokerPack = {
-	information : {
-		suits : [ "spades", "hearts", "diamonds", "clubs" ]
-	},
-	cards : {}
-}
+
 // var cardSpriteFrames=new Array();
 
 var MyLayer = cc.Layer
@@ -1214,14 +1209,16 @@ var MainLayer = cc.LayerGradient
 
 				// this.setTouchEnabled(true);
 				// this.setKeyboardEnabled(true);
+				
+				// coordinate from top-left to right-bottom 
 
 				var backImage = cc.SpriteFrame.create(RES.image.cards,
 						new cc.Rect(160 * 2, 192 * 0, 160, 192));
 
-				for (var s = 0; s < PokerPack.information.suits.length; s++) {
+				for (var s = PokerPack.information.suits.length-1; s >=0; s--) {
 					for (var p = 1; p <= 13; p++) {
 						var frontImage = cc.SpriteFrame.create(RES.image.cards,
-								new cc.Rect(160 * (p - 1), 192 * (s + 1), 160,
+								new cc.Rect(160 * (p - 1), 192 * s, 160,
 										192));
 
 						PokerPack.cards[PokerPack.information.suits[s] + "-"
@@ -1229,6 +1226,14 @@ var MainLayer = cc.LayerGradient
 								+ "-" + p, frontImage, backImage);
 					}
 				}
+				
+				// senior-joker
+				PokerPack.cards["senior-joker"]=new Card("senior-joker",cc.SpriteFrame.create(RES.image.cards,
+						new cc.Rect(160 * 0, 192 * 4, 160, 192)),backImage)
+				// junior-joker
+				PokerPack.cards["junior-joker"]=new Card("junior-joker",cc.SpriteFrame.create(RES.image.cards,
+						new cc.Rect(160 * 1, 192 * 4, 160, 192)),backImage)
+				
 
 				// ///////////////////////////
 				// 2. add a menu item with "X" image, which is clicked to quit
@@ -1453,6 +1458,14 @@ var MainScene = cc.Scene.extend({
 		var layer = new MainLayer();
 		this.addChild(layer, 0);
 		layer.init();
+		
+		// send ready message
+		var readyMsg = {
+			userId : fc.self.id,
+			cla : 1,
+			ins : 6
+		};
+		room.send(readyMsg);
 	}
 });
 
@@ -1590,13 +1603,7 @@ var room = {
 			// init
 			cc.director.runScene(theRoom.scenes.mainScene);
 
-			// send ready message
-			var readyMsg = {
-				userId : fc.self.id,
-				cla : 1,
-				ins : 6
-			};
-			theRoom.send(readyMsg);
+			
 		}
 		// end game handler
 		this.messageHandlers[MESSAGE.END_GAME.key] = function(msg) {
@@ -1681,7 +1688,7 @@ var room = {
 				// show dialog
 				var theRoomObj = theRoom;
 				var askBetDialog = new AskBetDialog(function(amount) {
-					var betMsg = new Bet(amount);
+					var betMsg = new Bet(fc.self.id,amount);
 
 					theRoomObj.send(betMsg);
 				});
