@@ -76,7 +76,10 @@ var TestLayer=cc.LayerGradient.extend({
 		
 		selfSeat.putCard("handCardDock",[{id:"spades-1",suite:"spades",point:1},{id:"spades-2",suite:"spades",point:2}]);
 		selfSeat.putCard("putCardDock",[{id:"hearts-1",suite:"hearts",point:1},{id:"hearts-2",suite:"hearts",point:2}]);
+		selfSeat.showTip("不出");
+		
 		selfSeat.putCard("putCardDock",[{id:"hearts-3",suite:"hearts",point:3},{id:"hearts-4",suite:"hearts",point:4}]);
+		
 		
 		// test left seat
 		
@@ -88,7 +91,7 @@ var TestLayer=cc.LayerGradient.extend({
 		
 		leftSeat.putCard("handCardDock",[{id:"clubs-1",suite:"clubs",point:1},{id:"clubs-2",suite:"clubs",point:2}]);
 		leftSeat.putCard("putCardDock",[{id:"diamonds-1",suite:"diamonds",point:1},{id:"diamonds-2",suite:"diamonds",point:2}]);
-		
+		leftSeat.showTip("不出");
 		// test right seat
 		
 		var rightSeat = new RightSeat({id:"test-player-3",avatar:"farmer.png",name:"test player 3"});
@@ -99,8 +102,24 @@ var TestLayer=cc.LayerGradient.extend({
 		
 		rightSeat.putCard("handCardDock",[{id:"diamonds-3",suite:"diamonds",point:3},{id:"diamonds-4",suite:"diamonds",point:4}]);
 		rightSeat.putCard("putCardDock",[{id:"clubs-3",suite:"clubs",point:3},{id:"clubs-4",suite:"clubs",point:4}]);
+		rightSeat.showTip("不出");
 		
 		
+		var askBetDialog = new AskBetDialog(function(amount) {
+			var betMsg = new Bet(fc.self.id,amount);
+
+			fc.room.send(betMsg);
+		});
+
+		//cc.director.getRunningScene().addChild(askBetDialog,128,0);
+		
+		// test timer
+		
+		var timer = new Timer(9,function(){alert("timeout");});
+		timer.setPosition(new cc.Point(14,400));
+		this.addChild(timer)
+		
+		timer.start();
 		// test button
 		/*
 		var bn = ccui.Button.create();

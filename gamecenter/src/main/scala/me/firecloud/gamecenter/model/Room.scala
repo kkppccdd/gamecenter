@@ -95,7 +95,8 @@ class Seat{
 }
 
 abstract class Room(val id: String, val seatNum: Int) extends Actor {
-    val seats: List[Seat] = (for(i <- (1 to seatNum)) yield new Seat).toList
+	var timeout:Long=45 // seconds
+	val seats: List[Seat] = (for(i <- (1 to seatNum)) yield new Seat).toList
 }
 
 trait RoomFactory {

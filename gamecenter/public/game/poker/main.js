@@ -26,9 +26,9 @@ cc.game.onStart = function() {
 		
 		
 		CardPack.init();
-		//fc.room.init();
+		fc.room.init();
 		
-		cc.director.runScene(new TestScene());
+		//cc.director.runScene(new TestScene());
 		
 	}, this);
 

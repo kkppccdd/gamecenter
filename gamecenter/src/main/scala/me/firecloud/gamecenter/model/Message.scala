@@ -68,7 +68,7 @@ object Ask extends Message("0"){
     def cla:Long=0x01
     def ins:Long=0x05
 }
-case class Ask(targetUserId:String,actions:List[Tuple2[Long,Long]]) extends Message(Dealer.id){
+case class Ask(targetUserId:String,actions:List[Tuple2[Long,Long]],timeout:Long=0) extends Message(Dealer.id){
     def cla:Long=Ask.cla
     def ins:Long=Ask.ins
 }

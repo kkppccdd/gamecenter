@@ -16,7 +16,8 @@ var RES={
 			dialog_background:"dialog-bg.png",
 			card_icon:"back.jpg",
 			tip_left:"tip-left.png",
-			tip_right:"tip-right.png"
+			tip_right:"tip-right.png",
+			timer:"timer.png"
 				
 		}
 }
@@ -54,7 +55,8 @@ var g_resources =	[
     
     RES.image.card_icon,
     RES.image.tip_left,
-    RES.image.tip_right
+    RES.image.tip_right,
+    RES.image.timer
     //plist
 
     //fnt
