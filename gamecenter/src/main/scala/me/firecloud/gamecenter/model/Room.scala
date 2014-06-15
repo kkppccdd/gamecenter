@@ -8,6 +8,12 @@ import akka.actor.ActorRef
 import akka.actor.Actor
 import akka.actor.Props
 import me.firecloud.gamecenter.card.model.Card
+import me.firecloud.utils.logging.Logging
+import play.libs.Akka
+import me.firecloud.gamecenter.dao.Create
+import scala.collection.mutable.HashMap
+import me.firecloud.gamecenter.dao.Query
+import me.firecloud.gamecenter.dao.Update
 
 /**
  * @author kkppccdd
@@ -15,8 +21,10 @@ import me.firecloud.gamecenter.card.model.Card
  * @date Mar 8, 2014
  *
  */
-class RoomDescription(val kind: String, val name: String) {
+case class RoomDescription(val kind: String, val name: String,val seatNum:Int) {
     var id: String = null
+    var icon:String=null
+    var seats:List[Tuple3[String,String,String]]=null
 
 }
 
@@ -25,7 +33,7 @@ class Seat{
      * FREE,OCCUPIED,READY,ACTIVE,MISSED,TERMINATED
      */
     private var _state: String = "FREE"
-    var player: Tuple2[String, ActorRef] = ("",null)
+    var player: Tuple2[String, ActorRef] = (null,null)
     var bet:Int=0
     var role:String="FARMER"
     var hand: Set[Card] = Set()
@@ -94,7 +102,7 @@ class Seat{
     }
 }
 
-abstract class Room(val id: String, val seatNum: Int) extends Actor {
+abstract class Room(val id: String, val kind:String, val name:String, val seatNum: Int) extends Actor {
 	var timeout:Long=45 // seconds
 	val seats: List[Seat] = (for(i <- (1 to seatNum)) yield new Seat).toList
 }
@@ -115,4 +123,37 @@ object RoomFactoryManager {
 
     def getFactory(kind: String): Option[RoomFactory] = _registeredFactories.get(kind)
 
+}
+
+class RoomSupervisor extends Actor with Logging{
+  
+  val freeRooms= new HashMap[String,RoomDescription]
+  
+  def receive={
+    case Create(description:RoomDescription)=>
+      // create room actor
+        debug("lookup factory for "+description.kind)
+        val factory =RoomFactoryManager.getFactory(description.kind).get
+        val (roomDescription,props) = factory.build(description)
+        
+        val roomRef = context.actorOf(props, roomDescription.id)
+        
+        debug("create room:"+roomRef.toString)
+        
+        freeRooms.put(roomDescription.id, roomDescription)
+        
+        sender ! roomDescription
+    case Query(criteria:String)=>
+      sender ! freeRooms.values.toList
+    case Update(description:RoomDescription)=>
+      // 
+      if(description.seats.size == description.seatNum && !description.seats.exists((x:Tuple3[String,String,String])=>x._1 == null)){
+        // room is full
+        freeRooms.remove(description.id)
+      }else{
+        freeRooms.update(description.id, description)
+      }
+    case _=>
+      error("unsupported message")
+  }
 }

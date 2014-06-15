@@ -31,7 +31,7 @@ object Connector extends Controller with Logging{
             // construct player actor
             
             
-            val playerSupervisor =Akka.system().actorSelection("user/players")
+            val playerSupervisor =Akka.system().actorSelection("user/player")
             
             playerSupervisor!new ClientConnectted(userId,channel)
             
@@ -43,7 +43,7 @@ object Connector extends Controller with Logging{
                     if (decodedMesg.isDefined) {
                         //the Enumerator returned by Concurrent.broadcast subscribes to the channel and will 
                         //receive the pushed messages
-                        val playerActorRef=Akka.system().actorSelection("user/players/"+userId)
+                        val playerActorRef=Akka.system().actorSelection("user/player/"+userId)
                         playerActorRef! decodedMesg.get                        
                         //channel push ("RESPONSE: " + decodedMesg.get.cla)
                     } else {

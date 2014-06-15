@@ -3,6 +3,10 @@
  */
 package controllers
 
+import scala.concurrent.Await
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.duration._
 import play.api._
 import play.api.mvc._
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -19,6 +23,12 @@ import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.fasterxml.jackson.module.scala.OptionModule
 import com.fasterxml.jackson.module.scala.TupleModule
 import com.fasterxml.jackson.databind.MapperFeature
+import me.firecloud.gamecenter.dao.Query
+import me.firecloud.gamecenter.dao.Create
+import me.firecloud.gamecenter.model.Game
+import me.firecloud.gamecenter.model.Player
+import me.firecloud.gamecenter.dao.GameDao
+import me.firecloud.gamecenter.dao.PlayerDao
 
 /**
  * @author kkppccdd
@@ -26,54 +36,120 @@ import com.fasterxml.jackson.databind.MapperFeature
  * @date Mar 8, 2014
  *
  */
-object Hall extends Controller with Logging{
-	val mapper = new ObjectMapper() with ScalaObjectMapper
-    
-    val module = new OptionModule with TupleModule {}
-    
-    mapper.registerModule(DefaultScalaModule)
-    mapper.registerModule(module)
-    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
-    
-    
-    def post =Action{request=>{
-        // create room model
-        val payload = request.body.asJson
-        
-        val roomConfig = mapper.readValue[RoomDescription](payload.get.toString)
-        
-        
-        // create room actor
-        debug("lookup factory for "+roomConfig.kind)
-        val factory =RoomFactoryManager.getFactory(roomConfig.kind).get
-        val (roomDescription,props) = factory.build(roomConfig)
-        
-        Akka.system().actorOf(props, roomDescription.id)
+object Hall extends Controller with Logging {
+  val mapper = new ObjectMapper() with ScalaObjectMapper
+
+  val module = new OptionModule with TupleModule {}
+
+  mapper.registerModule(DefaultScalaModule)
+  mapper.registerModule(module)
+  mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+  mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+
+  def create = Action { request =>
+    {
+      // create room model
+      val payload = request.body.asJson
+
+      val roomConfig = mapper.readValue[RoomDescription](payload.get.toString)
+
+      // populate icon
+
+      GameDao.get("kind" -> roomConfig.kind).map { game =>
+
+        roomConfig.icon = game.icon
+
+        val roomSupervisor = Akka.system().actorSelection("user/room")
+
+        implicit val timeout = Timeout(1 seconds)
+
+        val future = roomSupervisor ? new Create(roomConfig)
+
+        val roomDescription = Await.result(future, timeout.duration).asInstanceOf[RoomDescription]
         // return room
         Ok(mapper.writeValueAsString(roomDescription))
+      }.getOrElse {
+        BadRequest
+      }
     }
-    }
-	
-	def enterRoom(roomId:String)=Action{
-	    request=>{
-	        val selfId = request.getQueryString("userId").get
-	        Ok(views.html.room(roomId, selfId))//.withHeaders("Access-Control-Allow-Origin"->"*")
-	    }
-	}
-	
-	
-	protected[this] def typeReference[T: Manifest] = new TypeReference[T] {
-        override def getType = typeFromManifest(manifest[T])
+  }
 
-    }
-
-    protected[this] def typeFromManifest(m: Manifest[_]): Type = {
-        if (m.typeArguments.isEmpty) { m.runtimeClass }
-        else new ParameterizedType {
-            def getRawType = m.runtimeClass
-            def getActualTypeArguments = m.typeArguments.map(typeFromManifest).toArray
-            def getOwnerType = null
+  def query = Action {
+    request =>
+      {
+        val criteria: String = if (request.queryString.contains("criteria")) { request.queryString.get("criteria").get(0) } else {
+          ""
         }
+
+        val roomSupervisor = Akka.system().actorSelection("user/room")
+
+        implicit val timeout = Timeout(1 seconds)
+
+        val future = roomSupervisor ? new Query(criteria)
+
+        val roomDescriptions = Await.result(future, timeout.duration).asInstanceOf[List[RoomDescription]]
+
+        roomDescriptions.foreach(room => {
+          // populate icon of game
+
+          val gameIcon = GameDao.get("kind" -> room.kind).map {
+            game =>
+              game.icon
+          }.getOrElse {
+            ""
+          }
+
+          room.icon = gameIcon
+
+          // populate name and avatar of user
+
+          if (room.seats != null) {
+            val seats = room.seats.map(x => {
+              // load user
+              if (x._1 != null) {
+                PlayerDao.get(x._1).map { player =>
+                  (player.id, player.name, player.avatar)
+                }.getOrElse {
+                  (null, null, null)
+                }
+              } else {
+                (null, null, null)
+              }
+            })
+            room.seats = seats
+          }
+
+        })
+
+        // return rooms
+        Ok(mapper.writeValueAsString(roomDescriptions))
+      }
+  }
+
+  def enterRoom(roomId: String) = Action {
+    request =>
+      {
+        // get user id from cookies
+        request.session.get("player-id").map { playerId =>
+
+          Ok(views.html.room(roomId, playerId))
+        }.getOrElse {
+          BadRequest("Miss player-id")
+        }
+      }
+  }
+
+  protected[this] def typeReference[T: Manifest] = new TypeReference[T] {
+    override def getType = typeFromManifest(manifest[T])
+
+  }
+
+  protected[this] def typeFromManifest(m: Manifest[_]): Type = {
+    if (m.typeArguments.isEmpty) { m.runtimeClass }
+    else new ParameterizedType {
+      def getRawType = m.runtimeClass
+      def getActualTypeArguments = m.typeArguments.map(typeFromManifest).toArray
+      def getOwnerType = null
     }
+  }
 }

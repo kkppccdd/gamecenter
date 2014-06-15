@@ -22,6 +22,8 @@ import me.firecloud.gamecenter.model.Notification
 import me.firecloud.gamecenter.model.Ask
 import me.firecloud.gamecenter.model.Ready
 import me.firecloud.gamecenter.model.PlayerPropertyChange
+import me.firecloud.gamecenter.model.RoomDescription
+import me.firecloud.gamecenter.dao.Update
 
 /**
  * @author kkppccdd
@@ -29,16 +31,13 @@ import me.firecloud.gamecenter.model.PlayerPropertyChange
  * @date Mar 8, 2014
  *
  */
-class CardRoomDescription(kind: String, name: String, val playerNum: Int) extends RoomDescription(kind, name) {
-
-}
 
 class CardRoomFactory extends RoomFactory {
   override def kind: String = "card"
   override def build(description: RoomDescription): Tuple2[RoomDescription, Props] = {
     val id = UUID.randomUUID().toString()
     description.id = id
-    (description, Props(new CardRoom(id, 3)))
+    (description, Props(new CardRoom(id, description.name,description.seatNum)))
   }
 }
 
@@ -77,7 +76,7 @@ case object AppendPutCard extends State
 sealed trait Data
 case object Uninitialized extends Data
 
-class CardRoom(id: String, seatNum: Int) extends Room(id, seatNum) with FSM[State, Data] with Logging {
+class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", name, seatNum) with FSM[State, Data] with Logging {
   startWith(Idle, Uninitialized)
 
   when(Idle) {
@@ -268,6 +267,7 @@ class CardRoom(id: String, seatNum: Int) extends Room(id, seatNum) with FSM[Stat
   }
 
   initialize
+  
 
   var defaultCycle: SeatCycle = null;
 
@@ -326,16 +326,29 @@ class CardRoom(id: String, seatNum: Int) extends Room(id, seatNum) with FSM[Stat
       val msg = new JoinRoom(x._1.player._1, id, x._2)
       notify(seat, msg)
     })
+    
+    
+    // report status to supervisor
+    reportStatus
 
     // construct join room message
     val joinRoom = new JoinRoom(playerId, id, index)
 
     notifyAll(joinRoom)
+    
   }
 
   protected def end: Unit = {
     val endMsg = new EndGame(Dealer.id)
     notifyAll(endMsg)
+  }
+  
+  protected def reportStatus:Unit ={
+    val roomDescription = new RoomDescription(this.kind,this.name,this.seatNum)
+    roomDescription.id=this.id
+    roomDescription.seats=this.seats.map((seat:Seat)=>(seat.player._1,null,null))
+    
+    context.parent ! new Update(roomDescription)
   }
 
   /**

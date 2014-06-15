@@ -53,7 +53,7 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
     @Before
     def setUp() {
         roomFactory = new CardRoomFactory()
-        val tuple = roomFactory.build(new CardRoomDescription("card", "test-room", 3))
+        val tuple = roomFactory.build(new RoomDescription("card", "test-room", 3))
         description = tuple._1
         roomProps = tuple._2
         roomActorRef = TestActorRef(roomProps, name = description.id)
