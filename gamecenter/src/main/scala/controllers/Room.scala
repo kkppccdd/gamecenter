@@ -29,6 +29,7 @@ import me.firecloud.gamecenter.model.Game
 import me.firecloud.gamecenter.model.Player
 import me.firecloud.gamecenter.dao.GameDao
 import me.firecloud.gamecenter.dao.PlayerDao
+import me.firecloud.gamecenter.dao.Get
 
 /**
  * @author kkppccdd
@@ -89,52 +90,56 @@ object Hall extends Controller with Logging {
 
         val roomDescriptions = Await.result(future, timeout.duration).asInstanceOf[List[RoomDescription]]
 
-        roomDescriptions.foreach(room => {
-          // populate icon of game
-
-          val gameIcon = GameDao.get("kind" -> room.kind).map {
-            game =>
-              game.icon
-          }.getOrElse {
-            ""
-          }
-
-          room.icon = gameIcon
-
-          // populate name and avatar of user
-
-          if (room.seats != null) {
-            val seats = room.seats.map(x => {
-              // load user
-              if (x._1 != null) {
-                PlayerDao.get(x._1).map { player =>
-                  (player.id, player.name, player.avatar)
-                }.getOrElse {
-                  (null, null, null)
-                }
-              } else {
-                (null, null, null)
-              }
-            })
-            room.seats = seats
-          }
-
-        })
-
         // return rooms
         Ok(mapper.writeValueAsString(roomDescriptions))
+      }
+  }
+  
+  def get(roomId:String)=Action{
+    request =>
+      {
+        // check room status
+        val roomSupervisor = Akka.system().actorSelection("user/room")
+
+        implicit val timeout = Timeout(1 seconds)
+
+        val future = roomSupervisor ? new Get(roomId)
+        val room = Await.result(future, timeout.duration).asInstanceOf[RoomDescription]
+        
+        // return rooms
+        Ok(mapper.writeValueAsString(room))
       }
   }
 
   def enterRoom(roomId: String) = Action {
     request =>
       {
-        // get user id from cookies
-        request.session.get("player-id").map { playerId =>
+        // check room status
+        val roomSupervisor = Akka.system().actorSelection("user/room")
 
-          Ok(views.html.room(roomId, playerId))
-        }.getOrElse {
-          BadRequest("Miss player-id")
+        implicit val timeout = Timeout(1 seconds)
+
+        val future = roomSupervisor ? new Get(roomId)
+        val room = Await.result(future, timeout.duration).asInstanceOf[RoomDescription]
+
+        val onPlaying = room.seats!=null && room.seats.size == room.seatNum && !room.seats.exists((x: Tuple3[String, String, String]) => x._1 == null)
+        if (onPlaying == true) {
+          // get user id from cookies
+          request.session.get("player-id").map { playerId =>
+
+            Ok(views.html.room(room, playerId))
+          }.getOrElse {
+            BadRequest("Miss player-id")
+          }
+        } else {
+          // response waiting pages
+          // get user id from cookies
+          request.session.get("player-id").map { playerId =>
+
+            Ok(views.html.waitting(room, playerId))
+          }.getOrElse {
+            BadRequest("Miss player-id")
+          }
         }
       }
   }

@@ -22,10 +22,19 @@ cc.game.onStart = function() {
 		//cc.director.runScene(room.scenes.waitPlayerScene);
 		
 		// for test 
-		fc.roomInfo.seatSize=3;
+		//fc.roomInfo.seatSize=3;
 		
 		
 		CardPack.init();
+		fc.room.players=fc.roomInfo.seats;
+		
+		// transform avatar url with crosproxy to go pass CROS restriction 
+		for(var i=0;i<fc.room.players.length;i++){
+			var originalAvatarUrl=fc.room.players[i].avatar;
+			originalAvatarUrl="http://www.corsproxy.com/"+originalAvatarUrl.replace("http://","");
+			fc.room.players[i].avatar=originalAvatarUrl;
+		}
+		
 		fc.room.init();
 		
 		//cc.director.runScene(new TestScene());

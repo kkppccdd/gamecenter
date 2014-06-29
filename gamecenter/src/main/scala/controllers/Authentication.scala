@@ -70,7 +70,7 @@ object Authentication extends Controller with Logging {
           // 
           val requestTarget = request.session.get("request-target").getOrElse { "/" }
 
-          Redirect(requestTarget, 302).withNewSession.withSession("player-id"->associatedPlayer.id,"social-id" -> socialId, "socialToken" -> socialToken, "expire" -> String.valueOf(socialExpire)).withCookies(new Cookie("social-token",socialToken,httpOnly=false))
+          Redirect(requestTarget, 302).withNewSession.withSession("player-id"->associatedPlayer.id,"social-id" -> socialId, "socialToken" -> socialToken, "expire" -> String.valueOf(socialExpire)).withCookies(new Cookie("social-token",socialToken,httpOnly=false),new Cookie("social-id",socialId,httpOnly=false))
 
         //}catch(NoSuchElementException ex){
         //  Status(401)("Authentication failed.")

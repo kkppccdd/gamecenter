@@ -24,6 +24,7 @@ import me.firecloud.gamecenter.model.Ready
 import me.firecloud.gamecenter.model.PlayerPropertyChange
 import me.firecloud.gamecenter.model.RoomDescription
 import me.firecloud.gamecenter.dao.Update
+import me.firecloud.gamecenter.dao.PlayerDao
 
 /**
  * @author kkppccdd
@@ -37,7 +38,7 @@ class CardRoomFactory extends RoomFactory {
   override def build(description: RoomDescription): Tuple2[RoomDescription, Props] = {
     val id = UUID.randomUUID().toString()
     description.id = id
-    (description, Props(new CardRoom(id, description.name,description.seatNum)))
+    (description, Props(new CardRoom(id, description.name, description.seatNum)))
   }
 }
 
@@ -59,7 +60,7 @@ class SeatCycle(seats: List[Seat]) {
   // get current seat
   def current: Seat = seats(currentPos)
   // check if on turn
-  def onturn(playerId: String) = current.player._1 == playerId
+  def onturn(playerId: String) = current.playerId == playerId
 
   def head: Seat = seats(0)
 
@@ -76,7 +77,7 @@ case object AppendPutCard extends State
 sealed trait Data
 case object Uninitialized extends Data
 
-class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", name, seatNum) with FSM[State, Data] with Logging {
+class CardRoom(id: String, name: String, seatNum: Int) extends Room(id, "card", name, seatNum) with FSM[State, Data] with Logging {
   startWith(Idle, Uninitialized)
 
   when(Idle) {
@@ -84,7 +85,7 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
 
       // 1. perform action and notify state changes
       info("received join room message")
-      join(userId, sender)
+      join(userId)
 
       // 2. perform check
 
@@ -113,7 +114,7 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
     case Event(Ready(userId), Uninitialized) => {
       // lookup seat
 
-      val seat = seats.find(seat => seat.player._1 == userId).get
+      val seat = seats.find(seat => seat.playerId == userId).get
       seat.ready
 
       // check whether all players are ready
@@ -139,7 +140,7 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
 
   when(BetPhase) {
     case Event(Bet(userId, amount), Uninitialized) if defaultCycle.onturn(userId) => {
-      seats.find(seat => seat.player._1 == userId).get.bet = amount
+      seats.find(seat => seat.playerId == userId).get.bet = amount
 
       // notify all
       val betMsg = new Bet(userId, amount);
@@ -150,7 +151,7 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
 
       // check whether all players have bet
 
-      if (defaultCycle.current.player._1 == defaultCycle.head.player._1) {
+      if (defaultCycle.current.playerId == defaultCycle.head.playerId) {
         // all players have bet
 
         // decide who is the landlord
@@ -158,7 +159,7 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
         val maxBetSeat = seats.maxBy(_.bet)
         maxBetSeat.role = "LANDLORD"
 
-        notifyAll(new PlayerPropertyChange(maxBetSeat.player._1, List(("role", "LANDLORD"))))
+        notifyAll(new PlayerPropertyChange(maxBetSeat.playerId, List(("role", "LANDLORD"))))
 
         // deal last three cards
 
@@ -170,11 +171,11 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
         debug("landlord hand cards:" + maxBetSeat.hand.size)
 
         // move default turn to maxBetSeat
-        while (defaultCycle.current.player._1 != maxBetSeat.player._1) {
+        while (defaultCycle.current.playerId != maxBetSeat.playerId) {
           defaultCycle.move
         }
 
-        notifyAll(new DealCard(Dealer.id, maxBetSeat.player._1, cards))
+        notifyAll(new DealCard(Dealer.id, maxBetSeat.playerId, cards))
 
         // ask landlord put card
 
@@ -192,7 +193,7 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
   when(StartPutCard) {
     case Event(PutCard(userId, cards), Uninitialized) if defaultCycle.onturn(userId) =>
       // 1. perform action and notify state changes
-      debug(userId + "put cards " + cards.size)
+      debug(userId + " put cards " + cards.size)
       cards.foreach(card => {
         defaultCycle.current.hand = defaultCycle.current.hand - card
       })
@@ -221,6 +222,7 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
 
   when(AppendPutCard) {
     case Event(AppendCard(userId, cards), Uninitialized) if defaultCycle.onturn(userId) => {
+      debug(userId + " append cards " + cards.size)
       cards.foreach(card => {
         defaultCycle.current.hand = defaultCycle.current.hand - card
       })
@@ -267,7 +269,6 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
   }
 
   initialize
-  
 
   var defaultCycle: SeatCycle = null;
 
@@ -299,11 +300,11 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
     val messages = seats.map(seat => {
       // construct deal card message
       val cards = reservedCards.take(cardBatchSize)
-      val dealCard = new DealCard(Dealer.id, seat.player._1, cards)
+      val dealCard = new DealCard(Dealer.id, seat.playerId, cards)
       reservedCards = reservedCards.drop(cardBatchSize)
       seat.hand = seat.hand ++ cards.toSet[Card]
 
-      debug("seat " + seat.player._1 + " hand:" + seat.hand.size)
+      debug("seat " + seat.playerId + " hand:" + seat.hand.size)
       dealCard
     })
 
@@ -313,41 +314,59 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
 
   }
 
-  protected def join(playerId: String, playerActorRef: ActorRef): Unit = {
+  protected def join(playerId: String): Unit = {
 
     val jointSeats = seats.zipWithIndex.filter(_._1.state == "OCCUPIED")
+    // check the player if already joint
+    val isJoint = seats.zipWithIndex.find(x => x._1.playerId != null && x._1.playerId.equals(playerId))
+    isJoint.map {
+      seat =>
 
-    val (seat, index) = seats.zipWithIndex.find(_._1.state == "FREE").get
-    seat.player = (playerId, playerActorRef)
-    seat.occupy
+        // notify new player the players whom had joint
+        jointSeats.foreach(x => {
+          val msg = new JoinRoom(x._1.playerId, id, x._2)
+          notify(seat._1, msg)
+        })
+        // construct join room message
+        val joinRoom = new JoinRoom(playerId, id, seat._2)
 
-    // notify new player the players whom had joint
-    jointSeats.foreach(x => {
-      val msg = new JoinRoom(x._1.player._1, id, x._2)
-      notify(seat, msg)
-    })
-    
-    
-    // report status to supervisor
-    reportStatus
+        notifyAll(joinRoom)
+    }.getOrElse {
 
-    // construct join room message
-    val joinRoom = new JoinRoom(playerId, id, index)
+      val (seat, index) = seats.zipWithIndex.find(_._1.state == "FREE").get
 
-    notifyAll(joinRoom)
-    
+      seat.playerId = playerId
+      seat.occupy
+
+      // report status to supervisor
+      reportStatus
+      
+      
+      // notify new player the players whom had joint
+      jointSeats.foreach(x => {
+        val msg = new JoinRoom(x._1.playerId, id, x._2)
+        notify(seat, msg)
+      })
+
+      
+
+      // construct join room message
+      val joinRoom = new JoinRoom(playerId, id, index)
+
+      notifyAll(joinRoom)
+    }
   }
 
   protected def end: Unit = {
     val endMsg = new EndGame(Dealer.id)
     notifyAll(endMsg)
   }
-  
-  protected def reportStatus:Unit ={
-    val roomDescription = new RoomDescription(this.kind,this.name,this.seatNum)
-    roomDescription.id=this.id
-    roomDescription.seats=this.seats.map((seat:Seat)=>(seat.player._1,null,null))
-    
+
+  protected def reportStatus: Unit = {
+    val roomDescription = new RoomDescription(this.kind, this.name, this.seatNum)
+    roomDescription.id = this.id
+    roomDescription.seats = this.seats.map((seat: Seat) => (seat.playerId, null, null))
+
     context.parent ! new Update(roomDescription)
   }
 
@@ -357,13 +376,13 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
   protected def notifyAll(msg: Message): Unit = {
     seats.foreach(seat => {
       if (seat.state != "FREE") {
-        seat.player._2 ! new Notification(msg)
+        context.actorSelection("/user/player/" + seat.playerId) ! new Notification(msg)
       }
     })
   }
 
   protected def notify(seat: Seat, msg: Message): Unit = {
-    seat.player._2 ! new Notification(msg)
+    context.actorSelection("/user/player/" + seat.playerId) ! new Notification(msg)
   }
 
   /**
@@ -372,9 +391,9 @@ class CardRoom(id: String, name:String, seatNum: Int) extends Room(id, "card", n
   protected def ask(seat: Seat, actions: List[Tuple2[Long, Long]]): Unit = {
 
     // ask message should send to all players
-    val askMsg = new Ask(seat.player._1, actions,timeout)
+    val askMsg = new Ask(seat.playerId, actions, timeout)
     seats.foreach(seat =>
-      seat.player._2 ! askMsg)
+      context.actorSelection("/user/player/" + seat.playerId) ! askMsg)
   }
 
   /**

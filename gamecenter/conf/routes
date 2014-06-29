@@ -21,6 +21,8 @@ POST    /data/rest/room                  controllers.Hall.create
 
 GET    /data/rest/room                  controllers.Hall.query
 
+GET    /data/rest/room/:roomId                  controllers.Hall.get(roomId)
+
 
 ## restfule
 
@@ -33,3 +35,9 @@ GET    /data/rest/room                  controllers.Hall.query
 GET     /service/user/:userId                    controllers.Connector.communicate(userId)
 # entr room
 GET     /service/room/:roomId               controllers.Hall.enterRoom(roomId)
+
+
+##############
+## tools
+
+POST    /tool/proxy/weibo                  controllers.WeiboProxy.post

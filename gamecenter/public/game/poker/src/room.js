@@ -673,6 +673,12 @@ var AvatarSection = cc.Node.extend({
 
 		// 
 		var avatarSprite = new cc.Sprite(image);
+		
+		// scale avatar to 100x100
+		console.debug("avatar width:"+avatarSprite.width+",height:"+avatarSprite.height);
+		avatarSprite.setScaleX(100/180);
+		avatarSprite.setScaleY(100/180);
+		
 		avatarSprite.setAnchorPoint(new cc.Point(0, 0));
 		avatarSprite.setPosition(new cc.Point(0, 0));
 
@@ -1495,7 +1501,6 @@ fc["room"] = {
 	seats : new Array(),
 	players : new Array(),
 	seatPosOff : 0,
-	seatSize : 3,
 	/***************************************************************************
 	 * runtime flags
 	 */
@@ -1561,12 +1566,8 @@ fc["room"] = {
 	onWsOpen : function() {
 		console.debug("ws is connected." + this.webSocket);
 
-		// show wait scene
-
-		this.scenes.waitPlayerScene = new WaitScene();
-
-		cc.director.runScene(this.scenes.waitPlayerScene);
-
+		this.scenes.playScene = new PlayScene(fc.self,this.players);
+		cc.director.runScene(this.scenes.playScene);
 	},
 	/**
 	 * handle web socket close event
@@ -1841,42 +1842,4 @@ fc["room"] = {
 	}
 };
 
-/*******************************************************************************
- * Poker
- */
-var CardPack = {
-	information : {
-		suits : [ "spades", "hearts", "diamonds", "clubs" ]
-	},
-	cards : {},
-	init : function() {
-		/***********************************************************************
-		 * the ordinate of rect start from left-top corner to right-bottom
-		 * corner
-		 */
-		var backImage = cc.SpriteFrame.create(RES.image.cards, new cc.Rect(
-				124 * 2, 168 * 4, 124, 168));
 
-		for (var s = 0; s < this.information.suits.length; s++) {
-			for (var p = 1; p <= 13; p++) {
-				var frontImage = cc.SpriteFrame.create(RES.image.cards,
-						new cc.Rect(124 * (p - 1),
-								168 * (this.information.suits.length - s - 1),
-								124, 168));
-
-				this.cards[this.information.suits[s] + "-" + p] = new Card(
-						this.information.suits[s] + "-" + p, frontImage,
-						backImage);
-			}
-		}
-
-		// senior-joker
-		this.cards["senior-joker"] = new Card("senior-joker", cc.SpriteFrame
-				.create(RES.image.cards,
-						new cc.Rect(124 * 0, 168 * 4, 124, 168)), backImage)
-		// junior-joker
-		this.cards["junior-joker"] = new Card("junior-joker", cc.SpriteFrame
-				.create(RES.image.cards,
-						new cc.Rect(124 * 1, 168 * 4, 124, 168)), backImage)
-	}
-};
