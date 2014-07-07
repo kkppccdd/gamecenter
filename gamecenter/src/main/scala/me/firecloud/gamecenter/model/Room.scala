@@ -40,6 +40,7 @@ class Seat {
   var bet: Int = 0
   var role: String = "FARMER"
   var hand: Set[Card] = Set()
+  var putCards:List[Card]=List()
 
   /**
    * *****************************************

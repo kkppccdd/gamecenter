@@ -29,7 +29,7 @@ import me.firecloud.gamecenter.model.PlayerSupervisor
 
 class MockSupervisorActor extends Actor {
   def receive = {
-    case byPassActors:List[Tuple2[String, ActorRef]] =>
+    case byPassActors: List[Tuple2[String, ActorRef]] =>
       byPassActors.foreach(byPassActor =>
         context.actorOf(Props(new ByPassActor(byPassActor._2)), name = byPassActor._1))
   }
@@ -83,16 +83,88 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
 
     // construct by pass actors
     val playerSupervisor = system.actorOf(Props[MockSupervisorActor], name = "player")
-    
-    val byPassActors=List(("1",player1.ref),("2",player2.ref),("3",player3.ref))
-    
+
+    val byPassActors = List(("1", player1.ref), ("2", player2.ref), ("3", player3.ref))
+
     playerSupervisor ! byPassActors
-    
+
   }
 
   @After
   def tearDown() {
     roomActorRef.stop
+  }
+
+  @Test
+  def testPutCardRule() {
+
+    val emptyCards = List()
+    val singleAce = List(new Card("spades-1", Suit.spades, 1))
+    val singleTwo = List(new Card("spades-2", Suit.spades, 2))
+    val singleThree = List(new Card("spades-3", Suit.spades, 3))
+    val singleKing = List(new Card("spades-13", Suit.spades, 13))
+
+    val pairAce = List(new Card("spades-1", Suit.spades, 1), new Card("clubs-1", Suit.clubs, 1))
+    val pairTwo = List(new Card("spades-2", Suit.spades, 2), new Card("clubs-2", Suit.clubs, 2))
+    val pairThree = List(new Card("spades-3", Suit.spades, 3), new Card("clubs-3", Suit.clubs, 3))
+    val pairKing = List(new Card("spades-13", Suit.spades, 13), new Card("clubs-13", Suit.clubs, 13))
+
+    val tripleAce = List(new Card("spades-1", Suit.spades, 1), new Card("clubs-1", Suit.clubs, 1), new Card("diamonds-1", Suit.diamonds, 1))
+    val tripleTwo = List(new Card("spades-2", Suit.spades, 2), new Card("clubs-2", Suit.clubs, 2), new Card("diamonds-2", Suit.diamonds, 2))
+    val tripleThree = List(new Card("spades-3", Suit.spades, 3), new Card("clubs-3", Suit.clubs, 3), new Card("diamonds-3", Suit.diamonds, 3))
+    val tripleKing = List(new Card("spades-13", Suit.spades, 13), new Card("clubs-13", Suit.clubs, 13), new Card("diamonds-13", Suit.diamonds, 13))
+
+    val boombAce = List(new Card("spades-1", Suit.spades, 1), new Card("clubs-1", Suit.clubs, 1), new Card("diamonds-1", Suit.diamonds, 1), new Card("hearts-1", Suit.hearts, 1))
+    val boombTwo = List(new Card("spades-2", Suit.spades, 2), new Card("clubs-2", Suit.clubs, 2), new Card("diamonds-2", Suit.diamonds, 2), new Card("hearts-2", Suit.hearts, 2))
+    val boombThree = List(new Card("spades-3", Suit.spades, 3), new Card("clubs-3", Suit.clubs, 3), new Card("diamonds-3", Suit.diamonds, 3), new Card("hearts-3", Suit.hearts, 3))
+    val boombKing = List(new Card("spades-13", Suit.spades, 13), new Card("clubs-13", Suit.clubs, 13), new Card("diamonds-13", Suit.diamonds, 13), new Card("hearts-13", Suit.hearts, 13))
+
+    val sequenceThreeToSeven = List(new Card("spades-3", Suit.spades, 3), new Card("hearts-4", Suit.hearts, 4), new Card("spades-5", Suit.spades, 5), new Card("spades-6", Suit.spades, 6), new Card("spades-7", Suit.spades, 7))
+    val sequenceFiveToNine = List(new Card("spades-5", Suit.spades, 5), new Card("spades-6", Suit.spades, 6), new Card("spades-7", Suit.spades, 7), new Card("spades-8", Suit.spades, 8), new Card("spades-9", Suit.spades, 9))
+    val sequenceTenToAce = List(new Card("spades-10", Suit.spades, 10), new Card("spades-11", Suit.spades, 11), new Card("spades-12", Suit.spades, 12), new Card("spades-13", Suit.spades, 13), new Card("spades-1", Suit.spades, 1))
+
+    val sequenceThreeToEight = List(new Card("spades-3", Suit.spades, 3), new Card("hearts-4", Suit.hearts, 4), new Card("spades-5", Suit.spades, 5), new Card("spades-6", Suit.spades, 6), new Card("spades-7", Suit.spades, 7), new Card("spades-8", Suit.spades, 8))
+    val sequenceFiveToTen = List(new Card("spades-5", Suit.spades, 5), new Card("spades-6", Suit.spades, 6), new Card("spades-7", Suit.spades, 7), new Card("spades-8", Suit.spades, 8), new Card("spades-9", Suit.spades, 9), new Card("spades-10", Suit.spades, 10))
+    val sequenceNineToAce = List(new Card("spades-9", Suit.spades, 9), new Card("spades-10", Suit.spades, 10), new Card("spades-11", Suit.spades, 11), new Card("spades-12", Suit.spades, 12), new Card("spades-13", Suit.spades, 13), new Card("spades-1", Suit.spades, 1))
+
+    val tripleFiveWithPairSeven = List(new Card("spades-5", Suit.spades, 5), new Card("clubs-5", Suit.clubs, 5), new Card("diamonds-5", Suit.diamonds, 5), new Card("spades-7", Suit.spades, 7), new Card("hearts-7", Suit.hearts, 7))
+    val tripleEightWithPairSix = List(new Card("spades-8", Suit.spades, 8), new Card("clubs-8", Suit.clubs, 8), new Card("hearts-8", Suit.hearts, 8), new Card("spades-6", Suit.spades, 6), new Card("diamonds-6", Suit.diamonds, 6))
+    val tripleFourWithPairKing = List(new Card("spades-4", Suit.spades, 4), new Card("clubs-4", Suit.clubs, 4), new Card("hearts-4", Suit.hearts, 4), new Card("spades-13", Suit.spades, 13), new Card("diamonds-13", Suit.diamonds, 13))
+    val tripleNineWithPairJack = List(new Card("spades-9", Suit.spades, 9), new Card("clubs-9", Suit.clubs, 9), new Card("hearts-9", Suit.hearts, 9), new Card("spades-11", Suit.spades, 11), new Card("diamonds-11", Suit.diamonds, 11))
+
+    assertTrue("start put single ace", roomActorRef.underlyingActor.matchPutCardRule(emptyCards, singleAce));
+
+    assertTrue("single king is greater than single three", roomActorRef.underlyingActor.matchPutCardRule(singleThree, singleKing));
+    assertTrue("single ace is greater than single king", roomActorRef.underlyingActor.matchPutCardRule(singleKing, singleAce));
+    assertFalse("single three is not greater than single two", roomActorRef.underlyingActor.matchPutCardRule(singleTwo, singleThree))
+
+    assertTrue("pair ace is greater than paire king", roomActorRef.underlyingActor.matchPutCardRule(pairKing, pairAce))
+    assertFalse("pair ace is not greater than paire two", roomActorRef.underlyingActor.matchPutCardRule(pairTwo, pairAce))
+    assertTrue("pair two is greater than paire three", roomActorRef.underlyingActor.matchPutCardRule(pairThree, pairTwo))
+    assertFalse("pair ace is not greater than single king", roomActorRef.underlyingActor.matchPutCardRule(singleKing, pairAce))
+
+    assertTrue("sequenceFiveToNine is greater than sequenceThreeToSeven", roomActorRef.underlyingActor.matchPutCardRule(sequenceThreeToSeven, sequenceFiveToNine))
+    assertFalse("sequenceFiveToTen not greater than sequenceThreeToSeven", roomActorRef.underlyingActor.matchPutCardRule(sequenceThreeToSeven, sequenceFiveToTen))
+
+    assertTrue("sequenceFiveToTen is greater than sequenceThreeToEight", roomActorRef.underlyingActor.matchPutCardRule(sequenceThreeToEight, sequenceFiveToTen))
+    assertTrue("sequenceNineToAce is greater than sequenceFiveToTen", roomActorRef.underlyingActor.matchPutCardRule(sequenceFiveToTen, sequenceNineToAce))
+
+    assertFalse("triple ace is not greater than triple two", roomActorRef.underlyingActor.matchPutCardRule(tripleTwo, tripleAce))
+
+    assertTrue("tripleNineWithPairJack is greater than tripleFiveWithPairSeven", roomActorRef.underlyingActor.matchPutCardRule(tripleFiveWithPairSeven, tripleNineWithPairJack))
+    assertFalse("tripleEightWithPairSix is not greater than tripleFiveWithPairSeven", roomActorRef.underlyingActor.matchPutCardRule(tripleFiveWithPairSeven, tripleEightWithPairSix))
+    assertFalse("tripleFourWithPairKing is not greater than tripleFiveWithPairSeven", roomActorRef.underlyingActor.matchPutCardRule(tripleFiveWithPairSeven, tripleFourWithPairKing))
+
+    assertTrue("boomb three is greater than single ace", roomActorRef.underlyingActor.matchPutCardRule(singleAce, boombThree))
+    assertTrue("boomb three is greater than pair ace", roomActorRef.underlyingActor.matchPutCardRule(pairAce, boombThree))
+    assertTrue("boomb three is greater than triple ace", roomActorRef.underlyingActor.matchPutCardRule(tripleAce, boombThree))
+
+    assertTrue("boomb king is greater than boomb three", roomActorRef.underlyingActor.matchPutCardRule(boombThree, boombKing))
+    assertTrue("boomb Ace is greater than boomb king", roomActorRef.underlyingActor.matchPutCardRule(boombKing, boombAce))
+
+    assertTrue("boomb three is greater than any tripleWithPair", roomActorRef.underlyingActor.matchPutCardRule(tripleNineWithPairJack, boombThree))
+    
+    assertTrue("boomb three is greater than sequence", roomActorRef.underlyingActor.matchPutCardRule(sequenceNineToAce, boombThree))
   }
 
   @Test
@@ -140,7 +212,7 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
   }
 
   @Test
-  def testRejoinRoom(){
+  def testRejoinRoom() {
     // construct join room message
     val joinRoom1 = new JoinRoom("1", description.id)
 
@@ -166,28 +238,27 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
     resp2 = player2.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
     assertEquals("player2 joint", joinRoom2.userId, resp2.userId)
     assertEquals("player2 joint", 1, resp1.position)
-    
+
     // player1 rejoin 
-    
+
     player1.send(roomActorRef, joinRoom1)
     // receive notications of aready joint players (include itself)
     resp1 = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
     assertEquals("player1 joint", "1", resp1.userId)
     assertEquals("player1 joint", 0, resp1.position)
-    
+
     resp1 = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
     assertEquals("player2 joint", "2", resp1.userId)
     assertEquals("player2 joint", 1, resp1.position)
-    
+
     resp1 = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
     assertEquals("player1 joint", "1", resp1.userId)
     assertEquals("player1 joint", 0, resp1.position)
-    
+
     resp2 = player2.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
     assertEquals("player1 rejoint", "1", resp2.userId)
     assertEquals("player1 rejoint", 0, resp2.position)
-    
-    
+
     player3.send(roomActorRef, joinRoom3)
     resp1 = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
     resp2 = player2.expectMsgClass(classOf[Notification]).msg.asInstanceOf[JoinRoom]
@@ -205,7 +276,7 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
 
     val startGame = player1.expectMsgClass(classOf[Notification]).msg.asInstanceOf[StartGame]
   }
-  
+
   @Test
   def testStartGame() {
 
@@ -475,6 +546,7 @@ class CardEngineTest extends TestKit(ActorSystem("unittest")) with ImplicitSende
 
     // put card start by player1
 
+    
     // player1 put 5 cards
     var card1 = hand1.take(5)
     hand1 = hand1.drop(5)
